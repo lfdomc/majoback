@@ -1,0 +1,5 @@
+Fuentes incluidas para generar las imágenes de los productos:
+- Lilita One (Juan Montoreano) — SIL Open Font License 1.1
+- Bricolage Grotesque (Mathieu Triay) — SIL Open Font License 1.1
+Obtenidas de los paquetes @fontsource. Licencia: https://openfontlicense.org
+- Allura (Robert Leuschke) — SIL Open Font License 1.1

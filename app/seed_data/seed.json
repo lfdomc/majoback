@@ -1,0 +1,1601 @@
+{
+ "proveedores": [
+  "Automercado",
+  "Coopezarcero",
+  "Don Fernando",
+  "Dos Pinos",
+  "Isleña",
+  "La gran Bodega de Frutas",
+  "Mayca",
+  "Otros",
+  "Otros 2",
+  "Pequeño Mundo",
+  "Por definir",
+  "Price-Smart",
+  "Walmart"
+ ],
+ "ingredientes": [
+  {
+   "nombre": "Sirope de chocolate Hershey's",
+   "categoria": "Toppings",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Chorrito de 1 oz ≈ 28 g",
+   "presentaciones": [
+    {
+     "proveedor": "Por definir",
+     "descripcion": "Botella 680 g",
+     "precio": 3950,
+     "cantidad": 680,
+     "unidad": "g",
+     "merma_pct": 0,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Sirope de caramelo Hershey's",
+   "categoria": "Toppings",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "",
+   "presentaciones": [
+    {
+     "proveedor": "Por definir",
+     "descripcion": "Botella 623 g",
+     "precio": 4100,
+     "cantidad": 623,
+     "unidad": "g",
+     "merma_pct": 0,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Maní picado",
+   "categoria": "Toppings",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Porción de topping 10–20 g",
+   "presentaciones": [
+    {
+     "proveedor": "Por definir",
+     "descripcion": "Bolsa 1 kg",
+     "precio": 2800,
+     "cantidad": 1,
+     "unidad": "kg",
+     "merma_pct": 0,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Almendra laminada",
+   "categoria": "Toppings",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "",
+   "presentaciones": [
+    {
+     "proveedor": "Walmart",
+     "descripcion": "Paquete 200 g",
+     "precio": 5350,
+     "cantidad": 200,
+     "unidad": "g",
+     "merma_pct": 0,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Frutas en almíbar (melocotón)",
+   "categoria": "Toppings",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "La merma es el almíbar que se escurre",
+   "presentaciones": [
+    {
+     "proveedor": "Por definir",
+     "descripcion": "Lata pequeña 820 g (480 g escurrida)",
+     "precio": 2100,
+     "cantidad": 820,
+     "unidad": "g",
+     "merma_pct": 41.46,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    },
+    {
+     "proveedor": "Por definir",
+     "descripcion": "Lata institucional 3 kg (1,7 kg escurrida)",
+     "precio": 4800,
+     "cantidad": 3,
+     "unidad": "kg",
+     "merma_pct": 43.33,
+     "preferida": false,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Granola",
+   "categoria": "Toppings",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "",
+   "presentaciones": [
+    {
+     "proveedor": "Pequeño Mundo",
+     "descripcion": "Bolsa 500 g",
+     "precio": 2500,
+     "cantidad": 500,
+     "unidad": "g",
+     "merma_pct": 0,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Fresas",
+   "categoria": "Frutas",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Merma 10 %: de 1 kg salen 6 porciones de 150 g (900 g)",
+   "presentaciones": [
+    {
+     "proveedor": "Por definir",
+     "descripcion": "1 kg",
+     "precio": 2900,
+     "cantidad": 1,
+     "unidad": "kg",
+     "merma_pct": 10,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Yogurt",
+   "categoria": "Lácteos",
+   "unidad_base": "ml",
+   "peso_unidad_g": null,
+   "densidad_g_ml": 1.0,
+   "notas": "Porción 2 oz ≈ 60 ml",
+   "presentaciones": [
+    {
+     "proveedor": "Por definir",
+     "descripcion": "Litro Dos Pinos",
+     "precio": 1950,
+     "cantidad": 1,
+     "unidad": "l",
+     "merma_pct": 0,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Banano",
+   "categoria": "Frutas",
+   "unidad_base": "unidad",
+   "peso_unidad_g": 100,
+   "densidad_g_ml": null,
+   "notas": "150 g con cáscara, 100 g limpio. El peso por unidad registrado es el limpio.",
+   "presentaciones": [
+    {
+     "proveedor": "Por definir",
+     "descripcion": "1 unidad",
+     "precio": 60,
+     "cantidad": 1,
+     "unidad": "unidad",
+     "merma_pct": 0,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Sandía",
+   "categoria": "Frutas",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "De 4 kg quedan ~3200 g de pulpa limpia (merma 20 %)",
+   "presentaciones": [
+    {
+     "proveedor": "Por definir",
+     "descripcion": "Sandía entera ~4 kg",
+     "precio": 1600,
+     "cantidad": 4,
+     "unidad": "kg",
+     "merma_pct": 20,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Papaya",
+   "categoria": "Frutas",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "De 1,3 kg queda ~1 kg limpio",
+   "presentaciones": [
+    {
+     "proveedor": "Por definir",
+     "descripcion": "Papaya mediana ~1,3 kg",
+     "precio": 630,
+     "cantidad": 1.3,
+     "unidad": "kg",
+     "merma_pct": 23.08,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Piña",
+   "categoria": "Frutas",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "De 1,5 kg quedan ~900 g limpios",
+   "presentaciones": [
+    {
+     "proveedor": "Por definir",
+     "descripcion": "Piña mediana ~1,5 kg",
+     "precio": 590,
+     "cantidad": 1.5,
+     "unidad": "kg",
+     "merma_pct": 40,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Gelatina Royal en polvo",
+   "categoria": "Postres",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Rinde 1,5 litros",
+   "presentaciones": [
+    {
+     "proveedor": "Por definir",
+     "descripcion": "Sobre 80 g",
+     "precio": 630,
+     "cantidad": 80,
+     "unidad": "g",
+     "merma_pct": 0,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Agua",
+   "categoria": "Básicos",
+   "unidad_base": "ml",
+   "peso_unidad_g": null,
+   "densidad_g_ml": 1.0,
+   "notas": "",
+   "presentaciones": [
+    {
+     "proveedor": "Por definir",
+     "descripcion": "Agua potable",
+     "precio": 0,
+     "cantidad": 1,
+     "unidad": "l",
+     "merma_pct": 0,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Helado de vainilla",
+   "categoria": "Lácteos",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "9,46 L ≈ 4600 g. 1 bola = 60 g",
+   "presentaciones": [
+    {
+     "proveedor": "Por definir",
+     "descripcion": "Balde 2,5 galones (4600 g)",
+     "precio": 16000,
+     "cantidad": 4600,
+     "unidad": "g",
+     "merma_pct": 0,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Leche condensada",
+   "categoria": "Lácteos",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "",
+   "presentaciones": [
+    {
+     "proveedor": "Dos Pinos",
+     "descripcion": "Lata Pinito 397 g",
+     "precio": 1200,
+     "cantidad": 397,
+     "unidad": "g",
+     "merma_pct": 0,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Crema chantilly",
+   "categoria": "Lácteos",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Envase y cuchara",
+   "categoria": "Empaque",
+   "unidad_base": "unidad",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "",
+   "presentaciones": [
+    {
+     "proveedor": "Por definir",
+     "descripcion": "Set vaso + cuchara",
+     "precio": 110,
+     "cantidad": 1,
+     "unidad": "unidad",
+     "merma_pct": 0,
+     "preferida": true,
+     "fecha": "2026-10-01"
+    }
+   ]
+  },
+  {
+   "nombre": "Aceite",
+   "categoria": "Restaurante",
+   "unidad_base": "ml",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Aceite Girasol",
+   "categoria": "Restaurante",
+   "unidad_base": "ml",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Adereso Mil Islas",
+   "categoria": "Restaurante",
+   "unidad_base": "ml",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Aguacate",
+   "categoria": "Restaurante",
+   "unidad_base": "ml",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Ajo",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Ajonjoli Mix",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Alitas de pollo",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Apio",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Azucar",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Cebolla",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Comino",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Condimento Montreal (MC CORMICK)",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Culantro",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Harina",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Harina de Trigo (Harina Fuerte)",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Huevo",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Lechuga",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Levadura",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Miel",
+   "categoria": "Restaurante",
+   "unidad_base": "ml",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Molida de Cerdo",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Molina de Res",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Mostaza",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Natilla",
+   "categoria": "Restaurante",
+   "unidad_base": "ml",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Oregano",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Papas Fritas",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Pepperoni",
+   "categoria": "Restaurante",
+   "unidad_base": "ml",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Pimienta Negra",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Polvo de ajo",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Posta de Cerdo",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Queso Americano lonjas",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Queso Mozzarella",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Sal",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Salsa BBQ",
+   "categoria": "Restaurante",
+   "unidad_base": "ml",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Salsa pomodoro preparada",
+   "categoria": "Restaurante",
+   "unidad_base": "ml",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Tomate",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Tomillo",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  },
+  {
+   "nombre": "Tortilla Harina Mision",
+   "categoria": "Restaurante",
+   "unidad_base": "g",
+   "peso_unidad_g": null,
+   "densidad_g_ml": null,
+   "notas": "Precio 2019 eliminado: registrar precio actual",
+   "presentaciones": []
+  }
+ ],
+ "recetas": [
+  {
+   "nombre": "Bola de helado",
+   "tipo": "subreceta",
+   "categoria": "Postres",
+   "rinde_cantidad": 1,
+   "rinde_unidad": "porcion",
+   "items": [
+    {
+     "tipo": "ingrediente",
+     "nombre": "Helado de vainilla",
+     "cantidad": 60,
+     "unidad": "g",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "1 bola = 60 g (2 oz)"
+  },
+  {
+   "nombre": "Gelatina preparada",
+   "tipo": "subreceta",
+   "categoria": "Postres",
+   "rinde_cantidad": 1500,
+   "rinde_unidad": "g",
+   "items": [
+    {
+     "tipo": "ingrediente",
+     "nombre": "Gelatina Royal en polvo",
+     "cantidad": 80,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Agua",
+     "cantidad": 1.5,
+     "unidad": "l",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "Sobre de 80 g en 1,5 L de agua"
+  },
+  {
+   "nombre": "Ensalada de frutas Dolce",
+   "tipo": "producto",
+   "categoria": "Postres",
+   "rinde_cantidad": 1,
+   "rinde_unidad": "porcion",
+   "precio_competencia": 2500,
+   "items": [
+    {
+     "tipo": "ingrediente",
+     "nombre": "Piña",
+     "cantidad": 150,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Papaya",
+     "cantidad": 110,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Sandía",
+     "cantidad": 180,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Banano",
+     "cantidad": 1,
+     "unidad": "unidad",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "receta",
+     "nombre": "Bola de helado",
+     "cantidad": 1,
+     "unidad": "porcion",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "receta",
+     "nombre": "Gelatina preparada",
+     "cantidad": 150,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Crema chantilly",
+     "cantidad": 6,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Envase y cuchara",
+     "cantidad": 1,
+     "unidad": "unidad",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "Cantidades en gramos estimadas a partir de los costos anotados; ajustar a lo que realmente se sirve.",
+   "descripcion_menu": "Piña, papaya, sandía y banano con gelatina, una bola de helado y crema chantilly.",
+   "en_menu": true
+  },
+  {
+   "nombre": "Copa de helado 2 bolitas",
+   "tipo": "producto",
+   "categoria": "Postres",
+   "rinde_cantidad": 1,
+   "rinde_unidad": "porcion",
+   "items": [
+    {
+     "tipo": "receta",
+     "nombre": "Bola de helado",
+     "cantidad": 2,
+     "unidad": "porcion",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Envase y cuchara",
+     "cantidad": 1,
+     "unidad": "unidad",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "",
+   "descripcion_menu": "Dos bolas de helado de vainilla.",
+   "en_menu": true
+  },
+  {
+   "nombre": "Helado con gelatina",
+   "tipo": "producto",
+   "categoria": "Postres",
+   "rinde_cantidad": 1,
+   "rinde_unidad": "porcion",
+   "precio_competencia": 2000,
+   "items": [
+    {
+     "tipo": "receta",
+     "nombre": "Bola de helado",
+     "cantidad": 2,
+     "unidad": "porcion",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "receta",
+     "nombre": "Gelatina preparada",
+     "cantidad": 150,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Envase y cuchara",
+     "cantidad": 1,
+     "unidad": "unidad",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "",
+   "descripcion_menu": "Dos bolas de helado de vainilla con cubitos de gelatina.",
+   "en_menu": true
+  },
+  {
+   "nombre": "Fuente de frutas con granola",
+   "tipo": "producto",
+   "categoria": "Frutas",
+   "rinde_cantidad": 1,
+   "rinde_unidad": "porcion",
+   "precio_competencia": 2500,
+   "items": [
+    {
+     "tipo": "ingrediente",
+     "nombre": "Piña",
+     "cantidad": 150,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Papaya",
+     "cantidad": 110,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Sandía",
+     "cantidad": 180,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Banano",
+     "cantidad": 1,
+     "unidad": "unidad",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Granola",
+     "cantidad": 20,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Yogurt",
+     "cantidad": 2,
+     "unidad": "oz_fl",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Envase y cuchara",
+     "cantidad": 1,
+     "unidad": "unidad",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "Cantidades en gramos estimadas a partir de los costos anotados; ajustar a lo que realmente se sirve.",
+   "descripcion_menu": "Piña, papaya, sandía y banano con yogurt y granola.",
+   "en_menu": true
+  },
+  {
+   "nombre": "Fuente de frutas sola",
+   "tipo": "producto",
+   "categoria": "Frutas",
+   "rinde_cantidad": 1,
+   "rinde_unidad": "porcion",
+   "precio_competencia": 1500,
+   "items": [
+    {
+     "tipo": "ingrediente",
+     "nombre": "Piña",
+     "cantidad": 150,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Papaya",
+     "cantidad": 110,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Sandía",
+     "cantidad": 180,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Banano",
+     "cantidad": 1,
+     "unidad": "unidad",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Envase y cuchara",
+     "cantidad": 1,
+     "unidad": "unidad",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "Cantidades en gramos estimadas a partir de los costos anotados; ajustar a lo que realmente se sirve.",
+   "descripcion_menu": "Piña, papaya, sandía y banano recién picados.",
+   "en_menu": true
+  },
+  {
+   "nombre": "Fresas con leche condensada",
+   "tipo": "producto",
+   "categoria": "Frutas",
+   "rinde_cantidad": 1,
+   "rinde_unidad": "porcion",
+   "precio_competencia": 2500,
+   "items": [
+    {
+     "tipo": "ingrediente",
+     "nombre": "Fresas",
+     "cantidad": 150,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Leche condensada",
+     "cantidad": 40,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Envase y cuchara",
+     "cantidad": 1,
+     "unidad": "unidad",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "Vaso de 12 oz",
+   "descripcion_menu": "Vaso de 12 oz de fresas frescas bañadas en leche condensada.",
+   "en_menu": true
+  },
+  {
+   "nombre": "Banana split",
+   "tipo": "producto",
+   "categoria": "Postres",
+   "rinde_cantidad": 1,
+   "rinde_unidad": "porcion",
+   "precio_competencia": 3000,
+   "items": [
+    {
+     "tipo": "ingrediente",
+     "nombre": "Banano",
+     "cantidad": 1,
+     "unidad": "unidad",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "receta",
+     "nombre": "Bola de helado",
+     "cantidad": 3,
+     "unidad": "porcion",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Crema chantilly",
+     "cantidad": 6,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Sirope de chocolate Hershey's",
+     "cantidad": 1,
+     "unidad": "oz",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Maní picado",
+     "cantidad": 15,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Envase y cuchara",
+     "cantidad": 1,
+     "unidad": "unidad",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "",
+   "descripcion_menu": "Banano, tres bolas de helado, sirope de chocolate, chantilly y maní.",
+   "en_menu": true
+  },
+  {
+   "nombre": "Sundae",
+   "tipo": "producto",
+   "categoria": "Postres",
+   "rinde_cantidad": 1,
+   "rinde_unidad": "porcion",
+   "precio_competencia": 1800,
+   "items": [
+    {
+     "tipo": "receta",
+     "nombre": "Bola de helado",
+     "cantidad": 1,
+     "unidad": "porcion",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Crema chantilly",
+     "cantidad": 6,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Sirope de chocolate Hershey's",
+     "cantidad": 35,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Maní picado",
+     "cantidad": 15,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Envase y cuchara",
+     "cantidad": 1,
+     "unidad": "unidad",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "",
+   "descripcion_menu": "Helado de vainilla con sirope de chocolate, chantilly y maní.",
+   "en_menu": true
+  },
+  {
+   "nombre": "Banana hawaiana",
+   "tipo": "producto",
+   "categoria": "Postres",
+   "rinde_cantidad": 1,
+   "rinde_unidad": "porcion",
+   "precio_competencia": 2800,
+   "items": [
+    {
+     "tipo": "ingrediente",
+     "nombre": "Banano",
+     "cantidad": 1,
+     "unidad": "unidad",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "receta",
+     "nombre": "Bola de helado",
+     "cantidad": 3,
+     "unidad": "porcion",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Crema chantilly",
+     "cantidad": 6,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Sirope de chocolate Hershey's",
+     "cantidad": 1,
+     "unidad": "oz",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Frutas en almíbar (melocotón)",
+     "cantidad": 2,
+     "unidad": "oz",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Envase y cuchara",
+     "cantidad": 1,
+     "unidad": "unidad",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "",
+   "descripcion_menu": "Banano, tres bolas de helado, melocotón en almíbar, sirope de chocolate y chantilly.",
+   "en_menu": true
+  },
+  {
+   "nombre": "Tortas de Hamburguesa",
+   "tipo": "subreceta",
+   "categoria": "Restaurante",
+   "rinde_cantidad": 3650.0,
+   "rinde_unidad": "g",
+   "items": [
+    {
+     "tipo": "ingrediente",
+     "nombre": "Molina de Res",
+     "cantidad": 2500.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Molida de Cerdo",
+     "cantidad": 1000.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Aceite",
+     "cantidad": 302.0,
+     "unidad": "ml",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Polvo de ajo",
+     "cantidad": 15.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Sal",
+     "cantidad": 5.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Pimienta Negra",
+     "cantidad": 3.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Condimento Montreal (MC CORMICK)",
+     "cantidad": 30.0,
+     "unidad": "g",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "Importada de SUB-Recetas 1 (precios 2019 eliminados: actualizar ingredientes)"
+  },
+  {
+   "nombre": "Masa de Pizza",
+   "tipo": "subreceta",
+   "categoria": "Restaurante",
+   "rinde_cantidad": 1000.0,
+   "rinde_unidad": "g",
+   "items": [
+    {
+     "tipo": "ingrediente",
+     "nombre": "Harina",
+     "cantidad": 600.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Levadura",
+     "cantidad": 15.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Sal",
+     "cantidad": 10.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Oregano",
+     "cantidad": 5.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Aceite",
+     "cantidad": 50.0,
+     "unidad": "ml",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "Importada de SUB-Recetas 1 (precios 2019 eliminados: actualizar ingredientes)"
+  },
+  {
+   "nombre": "Cerdo Preparado",
+   "tipo": "subreceta",
+   "categoria": "Restaurante",
+   "rinde_cantidad": 3000.0,
+   "rinde_unidad": "g",
+   "items": [
+    {
+     "tipo": "ingrediente",
+     "nombre": "Posta de Cerdo",
+     "cantidad": 3000.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Ajo",
+     "cantidad": 50.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Sal",
+     "cantidad": 15.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Apio",
+     "cantidad": 100.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Cebolla",
+     "cantidad": 100.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Mostaza",
+     "cantidad": 30.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Tomillo",
+     "cantidad": 5.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Comino",
+     "cantidad": 1.0,
+     "unidad": "g",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "Importada de SUB-Recetas 2 (precios 2019 eliminados: actualizar ingredientes)"
+  },
+  {
+   "nombre": "Pan de Hamburguesa",
+   "tipo": "subreceta",
+   "categoria": "Restaurante",
+   "rinde_cantidad": 1120.0,
+   "rinde_unidad": "g",
+   "items": [
+    {
+     "tipo": "ingrediente",
+     "nombre": "Azucar",
+     "cantidad": 5.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Harina de Trigo (Harina Fuerte)",
+     "cantidad": 660.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Aceite Girasol",
+     "cantidad": 60.0,
+     "unidad": "ml",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Levadura",
+     "cantidad": 20.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Oregano",
+     "cantidad": 2.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Huevo",
+     "cantidad": 50.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Miel",
+     "cantidad": 20.0,
+     "unidad": "ml",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Sal",
+     "cantidad": 15.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Ajonjoli Mix",
+     "cantidad": 5.0,
+     "unidad": "g",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "Importada de SUB-Recetas 2 (precios 2019 eliminados: actualizar ingredientes)"
+  },
+  {
+   "nombre": "Pizza Peperoni",
+   "tipo": "producto",
+   "categoria": "Restaurante",
+   "rinde_cantidad": 1,
+   "rinde_unidad": "porcion",
+   "items": [
+    {
+     "tipo": "ingrediente",
+     "nombre": "Queso Mozzarella",
+     "cantidad": 170.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Pepperoni",
+     "cantidad": 60.0,
+     "unidad": "ml",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Salsa pomodoro preparada",
+     "cantidad": 50.0,
+     "unidad": "ml",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "receta",
+     "nombre": "Masa de Pizza",
+     "cantidad": 200.0,
+     "unidad": "g",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "Importada de Recetas 3 (precios 2019 eliminados: actualizar ingredientes)"
+  },
+  {
+   "nombre": "Hamburguesa Clasica",
+   "tipo": "producto",
+   "categoria": "Restaurante",
+   "rinde_cantidad": 1,
+   "rinde_unidad": "porcion",
+   "items": [
+    {
+     "tipo": "receta",
+     "nombre": "Tortas de Hamburguesa",
+     "cantidad": 205.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Queso Americano lonjas",
+     "cantidad": 20.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Tomate",
+     "cantidad": 20.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Lechuga",
+     "cantidad": 5.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Adereso Mil Islas",
+     "cantidad": 30.0,
+     "unidad": "ml",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "receta",
+     "nombre": "Pan de Hamburguesa",
+     "cantidad": 200.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Papas Fritas",
+     "cantidad": 160.0,
+     "unidad": "g",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "Importada de Recetas 3 (precios 2019 eliminados: actualizar ingredientes)"
+  },
+  {
+   "nombre": "Burrito Mexicano",
+   "tipo": "producto",
+   "categoria": "Restaurante",
+   "rinde_cantidad": 1,
+   "rinde_unidad": "porcion",
+   "items": [
+    {
+     "tipo": "ingrediente",
+     "nombre": "Tortilla Harina Mision",
+     "cantidad": 45.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Cebolla",
+     "cantidad": 75.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Culantro",
+     "cantidad": 20.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "receta",
+     "nombre": "Cerdo Preparado",
+     "cantidad": 140.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Aguacate",
+     "cantidad": 125.0,
+     "unidad": "ml",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Natilla",
+     "cantidad": 40.0,
+     "unidad": "ml",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "Importada de Recetas 4 (precios 2019 eliminados: actualizar ingredientes)"
+  },
+  {
+   "nombre": "Alitas de pollo",
+   "tipo": "producto",
+   "categoria": "Restaurante",
+   "rinde_cantidad": 1,
+   "rinde_unidad": "porcion",
+   "items": [
+    {
+     "tipo": "ingrediente",
+     "nombre": "Alitas de pollo",
+     "cantidad": 1000.0,
+     "unidad": "g",
+     "merma_pct": 0
+    },
+    {
+     "tipo": "ingrediente",
+     "nombre": "Salsa BBQ",
+     "cantidad": 200.0,
+     "unidad": "ml",
+     "merma_pct": 0
+    }
+   ],
+   "notas": "Importada de Recetas 4 (precios 2019 eliminados: actualizar ingredientes)"
+  }
+ ]
+}
