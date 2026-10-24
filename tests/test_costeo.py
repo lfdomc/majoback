@@ -137,3 +137,39 @@ def test_nombre_unico(h):
     n.pop("logo", None)
     c.put("/api/negocio", headers=h, json={**n, "nombre": "Dolce Marju by Diego"})
     assert c.get("/api/configuracion", headers=h).json()["nombre_negocio"] == "Dolce Marju by Diego"
+
+
+def test_publica_menu_en_r2(h, monkeypatch):
+    """Con las variables R2 puestas, un cambio publica menu.json e imágenes (con un S3 de prueba)."""
+    import json, time, boto3
+    from moto.server import ThreadedMotoServer
+    from app import publicar
+    srv = ThreadedMotoServer(port=5077, verbose=False); srv.start()
+    try:
+        for k, v in {"R2_ACCOUNT_ID": "x", "R2_ACCESS_KEY_ID": "a", "R2_SECRET_ACCESS_KEY": "b",
+                     "R2_BUCKET": "menu", "R2_PUBLIC_URL": "https://pub.ejemplo.dev/"}.items():
+            monkeypatch.setenv(k, v)
+        s3 = boto3.client("s3", endpoint_url="http://localhost:5077", aws_access_key_id="a",
+                          aws_secret_access_key="b", region_name="us-east-1")
+        s3.create_bucket(Bucket="menu")
+        monkeypatch.setattr(publicar, "_cliente", s3); monkeypatch.setattr(publicar, "_subidas", None)
+        r = c.post("/api/publicacion", headers=h).json()
+        assert r["activo"] and r["error"] is None and r["ultima"]
+        menu = json.loads(s3.get_object(Bucket="menu", Key="menu.json")["Body"].read())
+        assert "categorias" in menu and "publicado" in menu
+        fotos = [p["foto"] for cat in menu["categorias"] for p in cat["productos"] if p["foto"]]
+        for f in fotos:
+            assert f.startswith("https://pub.ejemplo.dev/media/")
+            s3.head_object(Bucket="menu", Key=f.split(".dev/")[1])
+        # un cambio cualquiera dispara la publicación automática (con unos segundos de espera)
+        antes = publicar.estado["ultima"]
+        time.sleep(1.1)
+        c.put("/api/negocio", headers=h, json={**c.get("/api/negocio", headers=h).json(), "horario": "Todos los días"})
+        for _ in range(60):
+            if publicar.estado["ultima"] != antes:
+                break
+            time.sleep(0.1)
+        menu = json.loads(s3.get_object(Bucket="menu", Key="menu.json")["Body"].read())
+        assert menu["negocio"]["horario"] == "Todos los días"
+    finally:
+        srv.stop()

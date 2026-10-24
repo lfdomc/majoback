@@ -17,6 +17,7 @@ from .auth import (crear_token, hash_clave, registrar_fallo, revisar_bloqueo, so
                    usuario_actual, verificar_clave)
 from .db import DB_PATH, Base, engine, get_db, migrar
 from . import arte as arte_mod
+from . import publicar
 from .db import SessionLocal
 from .imagenes import MEDIA_DIR, abrir, borrar_imagen, guardar_imagen, guardar_pil
 from .seed import inicializar
@@ -492,6 +493,7 @@ def regenerar_todas():
             db.commit()
     finally:
         db.close()
+    publicar.programar(_menu_actual, retraso=1.0)
 
 
 @app.get("/api/arte/estilos")
@@ -623,6 +625,10 @@ def quitar_logo(tareas: BackgroundTasks, _=Depends(solo_admin), db: Session = De
 @app.get("/api/publico/menu")
 def menu_publico(db: Session = Depends(get_db)):
     """Menú para clientes: sin costos ni márgenes, solo lo que se marcó para mostrar."""
+    return armar_menu(db)
+
+
+def armar_menu(db: Session) -> dict:
     negocio = leer_negocio(db)
     recetas = db.query(models.Receta).filter(models.Receta.tipo == "producto", models.Receta.en_menu.is_(True))\
         .order_by(models.Receta.categoria, models.Receta.nombre).all()
@@ -647,6 +653,38 @@ def media(nombre: str):
     return FileResponse(ruta, headers={"Cache-Control": "public, max-age=31536000, immutable"})
 
 
+def _menu_actual() -> dict:
+    db = SessionLocal()
+    try:
+        return armar_menu(db)
+    finally:
+        db.close()
+
+
+@app.get("/api/publicacion")
+def estado_publicacion(_=Auth):
+    return publicar.info()
+
+
+@app.post("/api/publicacion")
+def publicar_menu(_=Auth):
+    """Publica el menú ya mismo (además de la publicación automática después de cada cambio)."""
+    return publicar.publicar_ahora(_menu_actual)
+
+
+NO_PUBLICAN = ("/api/auth", "/api/recetas/calcular", "/api/publicacion", "/api/produccion")
+
+
+@app.middleware("http")
+async def _publicar_despues_de_cambios(request: Request, call_next):
+    resp = await call_next(request)
+    ruta = request.url.path
+    if (request.method in ("POST", "PUT", "PATCH", "DELETE") and ruta.startswith("/api/")
+            and resp.status_code < 400 and not ruta.startswith(NO_PUBLICAN)):
+        publicar.programar(_menu_actual)
+    return resp
+
+
 def _actualizar_imagenes_si_cambio_el_diseno():
     """Si el diseño de las imágenes cambió desde la última vez, las rehace todas (en segundo plano)."""
     db = SessionLocal()
@@ -665,6 +703,12 @@ def _actualizar_imagenes_si_cambio_el_diseno():
     regenerar_todas()
 
 
+def _tareas_al_arrancar():
+    _actualizar_imagenes_si_cambio_el_diseno()
+    if publicar.activo() and not publicar.estado["ultima"]:
+        publicar.publicar_ahora(_menu_actual)
+
+
 @app.on_event("startup")
 def _al_arrancar():
-    threading.Thread(target=_actualizar_imagenes_si_cambio_el_diseno, daemon=True).start()
+    threading.Thread(target=_tareas_al_arrancar, daemon=True).start()
