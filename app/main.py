@@ -30,7 +30,22 @@ inicializar()
 
 app = FastAPI(title="Costeo de recetas", version="1.0")
 
-origenes = [o.strip().rstrip("/") for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
+def _origenes() -> list[str]:
+    """Direcciones del sitio que pueden usar el backend. Acepta siempre la variante con y sin www."""
+    salida = []
+    for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(","):
+        o = o.strip().rstrip("/")
+        if not o:
+            continue
+        salida.append(o)
+        if "://" in o and "localhost" not in o and not o.endswith(".pages.dev"):
+            esquema, host = o.split("://", 1)
+            otra = host[4:] if host.startswith("www.") else "www." + host
+            salida.append(f"{esquema}://{otra}")
+    return list(dict.fromkeys(salida))
+
+
+origenes = _origenes()
 app.add_middleware(CORSMiddleware, allow_origins=origenes, allow_credentials=False,
                    allow_methods=["*"], allow_headers=["*"])
 
