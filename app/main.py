@@ -18,6 +18,7 @@ from .auth import (crear_token, hash_clave, registrar_fallo, revisar_bloqueo, so
 from .db import DB_PATH, Base, engine, get_db, migrar
 from . import arte as arte_mod
 from . import publicar
+from . import categorias as categorias_mod
 from .db import SessionLocal
 from .imagenes import MEDIA_DIR, abrir, borrar_imagen, guardar_imagen, guardar_pil
 from .seed import inicializar
@@ -29,11 +30,12 @@ inicializar()
 
 app = FastAPI(title="Costeo de recetas", version="1.0")
 
-origenes = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
+origenes = [o.strip().rstrip("/") for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origenes, allow_credentials=False,
                    allow_methods=["*"], allow_headers=["*"])
 
 Auth = Depends(usuario_actual)
+app.include_router(categorias_mod.router)
 
 
 def _guardar(db: Session, msg_dup: str):
@@ -640,7 +642,9 @@ def armar_menu(db: Session) -> dict:
             "foto": f"/media/{r.arte or r.foto}" if r.foto else None, "es_arte": bool(r.arte)})
     publico = {k: v for k, v in negocio.items() if k != "mostrar_precios"}
     publico["logo"] = f"/media/{negocio['logo']}" if negocio.get("logo") else None
-    return {"negocio": publico, "categorias": [{"nombre": k, "productos": v} for k, v in cats.items()]}
+    orden = {c["nombre"]: i for i, c in enumerate(categorias_mod.ordenadas(db, "producto"))}
+    claves = sorted(cats, key=lambda k: (orden.get(k, len(orden)), k.lower()))
+    return {"negocio": publico, "categorias": [{"nombre": k, "productos": cats[k]} for k in claves]}
 
 
 @app.get("/media/{nombre}")

@@ -173,3 +173,28 @@ def test_publica_menu_en_r2(h, monkeypatch):
         assert menu["negocio"]["horario"] == "Todos los días"
     finally:
         srv.stop()
+
+
+def test_categorias(h):
+    c.post("/api/recetas", headers=h, json={"nombre": "Prueba cat 1", "categoria": "Batidos", "items": []})
+    c.post("/api/recetas", headers=h, json={"nombre": "Prueba cat 2", "categoria": "Batidos", "items": []})
+    lista = c.get("/api/categorias/producto", headers=h).json()
+    assert {"nombre": "Batidos", "usos": 2} in lista
+    # crear vacía, no duplicar
+    lista = c.post("/api/categorias/producto", headers=h, json={"nombre": "Café"}).json()
+    assert lista[-1] == {"nombre": "Café", "usos": 0}
+    assert c.post("/api/categorias/producto", headers=h, json={"nombre": "café"}).status_code == 400
+    # renombrar cambia los productos
+    c.put("/api/categorias/producto/renombrar", headers=h, json={"anterior": "Batidos", "nuevo": "Bebidas"})
+    nombres = {r["nombre"]: r["categoria"] for r in c.get("/api/recetas", headers=h).json()}
+    assert nombres["Prueba cat 1"] == "Bebidas"
+    # orden
+    lista = c.put("/api/categorias/producto/orden", headers=h, json={"nombres": ["Café", "Bebidas"]}).json()
+    assert [x["nombre"] for x in lista][:2] == ["Café", "Bebidas"]
+    # borrar con productos exige destino
+    assert c.delete("/api/categorias/producto", headers=h, params={"nombre": "Bebidas"}).status_code == 400
+    lista = c.delete("/api/categorias/producto", headers=h, params={"nombre": "Bebidas", "mover_a": "Café"}).json()
+    assert {"nombre": "Café", "usos": 2} in lista and all(x["nombre"] != "Bebidas" for x in lista)
+    # ingredientes también
+    assert c.get("/api/categorias/ingrediente", headers=h).status_code == 200
+    assert c.get("/api/categorias/otra", headers=h).status_code == 400
