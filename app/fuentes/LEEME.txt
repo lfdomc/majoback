@@ -3,3 +3,5 @@ Fuentes incluidas para generar las imágenes de los productos:
 - Bricolage Grotesque (Mathieu Triay) — SIL Open Font License 1.1
 Obtenidas de los paquetes @fontsource. Licencia: https://openfontlicense.org
 - Allura (Robert Leuschke) — SIL Open Font License 1.1
+- Public Sans (USWDS) — SIL Open Font License 1.1
+- Liberation Sans (Red Hat) — SIL Open Font License 1.1 (para los PDF de reportes)

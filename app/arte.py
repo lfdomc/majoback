@@ -18,7 +18,7 @@ AQUI = os.path.dirname(__file__)
 FUENTES = os.path.join(AQUI, "fuentes")
 LADO = 1080
 # Cambie este número cuando cambie el diseño: al arrancar, el servidor rehace todas las imágenes.
-VERSION_ARTE = "5"
+VERSION_ARTE = "6"
 MODELO_URL = "https://github.com/danielgatis/rembg/releases/download/v0.0.0/silueta.onnx"
 
 _sesion = None

@@ -86,6 +86,8 @@ def publicar_ahora(armar_menu) -> dict:
             for c in menu["categorias"]:
                 for p in c["productos"]:
                     p["foto"] = a_r2(p.get("foto"))
+                    if p.get("foto_en"):
+                        p["foto_en"] = a_r2(p["foto_en"])
                     n += 1 if p["foto"] else 0
             menu["publicado"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
             s3.put_object(Bucket=bucket, Key="menu.json", Body=json.dumps(menu, ensure_ascii=False).encode("utf-8"),

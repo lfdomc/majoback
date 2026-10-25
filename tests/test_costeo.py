@@ -178,10 +178,12 @@ def test_publica_menu_en_r2(h, monkeypatch):
 def test_categorias(h):
     c.post("/api/recetas", headers=h, json={"nombre": "Prueba cat 1", "categoria": "Batidos", "items": []})
     c.post("/api/recetas", headers=h, json={"nombre": "Prueba cat 2", "categoria": "Batidos", "items": []})
-    lista = c.get("/api/categorias/producto", headers=h).json()
+    def solo(l):
+        return [{"nombre": x["nombre"], "usos": x["usos"]} for x in l]
+    lista = solo(c.get("/api/categorias/producto", headers=h).json())
     assert {"nombre": "Batidos", "usos": 2} in lista
     # crear vacía, no duplicar
-    lista = c.post("/api/categorias/producto", headers=h, json={"nombre": "Café"}).json()
+    lista = solo(c.post("/api/categorias/producto", headers=h, json={"nombre": "Café"}).json())
     assert lista[-1] == {"nombre": "Café", "usos": 0}
     assert c.post("/api/categorias/producto", headers=h, json={"nombre": "café"}).status_code == 400
     # renombrar cambia los productos
@@ -193,8 +195,43 @@ def test_categorias(h):
     assert [x["nombre"] for x in lista][:2] == ["Café", "Bebidas"]
     # borrar con productos exige destino
     assert c.delete("/api/categorias/producto", headers=h, params={"nombre": "Bebidas"}).status_code == 400
-    lista = c.delete("/api/categorias/producto", headers=h, params={"nombre": "Bebidas", "mover_a": "Café"}).json()
+    lista = solo(c.delete("/api/categorias/producto", headers=h, params={"nombre": "Bebidas", "mover_a": "Café"}).json())
     assert {"nombre": "Café", "usos": 2} in lista and all(x["nombre"] != "Bebidas" for x in lista)
     # ingredientes también
     assert c.get("/api/categorias/ingrediente", headers=h).status_code == 200
     assert c.get("/api/categorias/otra", headers=h).status_code == 400
+
+
+def test_reportes_e_impresos(h):
+    for que in ("productos", "ingredientes", "recetas"):
+        for f in ("pdf", "xlsx"):
+            r = c.get(f"/api/reportes/{que}", headers=h, params={"formato": f})
+            assert r.status_code == 200 and len(r.content) > 1000, (que, f)
+    rid = c.get("/api/recetas", headers=h).json()[0]["id"]
+    r = c.post("/api/reportes/compras", headers=h, params={"formato": "xlsx"}, json={"items": [{"receta_id": rid, "cantidad": 5}]})
+    assert r.status_code == 200
+    assert c.post("/api/reportes/compras", headers=h, json={"items": []}).status_code == 400
+    for f in ("mesa", "estado"):
+        r = c.get(f"/api/impresos/{f}", headers=h, params={"url": "https://www.ejemplo.com/", "tipo": "vista"})
+        assert r.status_code == 200 and r.headers["content-type"] == "image/jpeg"
+    assert c.get("/api/impresos/mesa", headers=h, params={"url": "javascript:alert(1)"}).status_code == 400
+
+
+def test_ingles(h):
+    r = c.post("/api/recetas", headers=h, json={"nombre": "Copa tropical", "categoria": "Postres", "en_menu": True,
+                                               "nombre_en": "Tropical sundae", "descripcion_menu_en": "Fruit and ice cream", "items": []})
+    rid = r.json()["id"]
+    assert c.get(f"/api/recetas/{rid}", headers=h).json()["nombre_en"] == "Tropical sundae"
+    menu = c.get("/api/publico/menu").json()
+    cat = next(x for x in menu["categorias"] if x["nombre"] == "Postres")
+    assert cat["nombre_en"] == "Desserts"  # sugerida
+    p = next(x for x in cat["productos"] if x["id"] == rid)
+    assert p["nombre_en"] == "Tropical sundae" and p["descripcion_en"] == "Fruit and ice cream"
+    lista = c.put("/api/categorias/producto/ingles", headers=h, json={"nombre": "Postres", "en": "Sweets"}).json()
+    assert next(x for x in lista if x["nombre"] == "Postres")["en"] == "Sweets"
+    menu = c.get("/api/publico/menu").json()
+    assert next(x for x in menu["categorias"] if x["nombre"] == "Postres")["nombre_en"] == "Sweets"
+    neg = c.get("/api/negocio", headers=h).json()
+    neg.pop("logo", None)
+    c.put("/api/negocio", headers=h, json={**neg, "eslogan_en": "Sweet treats"})
+    assert c.get("/api/publico/menu").json()["negocio"]["eslogan_en"] == "Sweet treats"

@@ -73,8 +73,11 @@ class Receta(Base):
     # Menú para clientes
     foto: Mapped[str | None] = mapped_column(String(120), nullable=True)
     descripcion_menu: Mapped[str] = mapped_column(Text, default="")
+    nombre_en: Mapped[str] = mapped_column(String(160), default="")          # nombre en inglés (menú /en)
+    descripcion_menu_en: Mapped[str] = mapped_column(Text, default="")
     en_menu: Mapped[bool] = mapped_column(Boolean, default=False)
     arte: Mapped[str | None] = mapped_column(String(120), nullable=True)      # imagen tipo anuncio generada
+    arte_en: Mapped[str | None] = mapped_column(String(120), nullable=True)   # la misma imagen con el nombre en inglés
     recorte: Mapped[str | None] = mapped_column(String(120), nullable=True)   # foto sin fondo
     estilo_arte: Mapped[str] = mapped_column(String(12), default="auto")
     quitar_fondo: Mapped[bool] = mapped_column(Boolean, default=True)

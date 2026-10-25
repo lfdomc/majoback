@@ -42,8 +42,11 @@ COLUMNAS_NUEVAS = {
         "en_menu": "BOOLEAN DEFAULT 0",
         "arte": "VARCHAR(120)",
         "recorte": "VARCHAR(120)",
+        "arte_en": "VARCHAR(120)",
         "estilo_arte": "VARCHAR(12) DEFAULT 'auto'",
         "quitar_fondo": "BOOLEAN DEFAULT 1",
+        "nombre_en": "VARCHAR(160) DEFAULT ''",
+        "descripcion_menu_en": "TEXT DEFAULT ''",
     },
 }
 

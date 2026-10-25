@@ -15,6 +15,39 @@ from .auth import usuario_actual
 from .db import get_db
 
 TIPOS = ("producto", "subreceta", "ingrediente")
+
+# Traducciones sugeridas para categorías comunes (se pueden cambiar en la pantalla de Categorías)
+SUGERIDAS = {
+    "postres": "Desserts", "frutas": "Fruit", "frutas frescas": "Fresh fruit", "helados": "Ice cream",
+    "bebidas": "Drinks", "batidos": "Smoothies", "cafe": "Coffee", "café": "Coffee", "restaurante": "Food",
+    "comidas": "Meals", "desayunos": "Breakfast", "almuerzos": "Lunch", "entradas": "Starters", "boquitas": "Snacks",
+    "ensaladas": "Salads", "pizzas": "Pizzas", "hamburguesas": "Burgers", "repostería": "Pastries", "reposteria": "Pastries",
+    "pasteles": "Cakes", "queques": "Cakes", "galletas": "Cookies", "combos": "Combos", "especiales": "Specials",
+    "granizados": "Shaved ice", "copas": "Sundaes", "crepas": "Crepes", "waffles": "Waffles", "otros": "Other",
+}
+
+
+def _ingles_guardado(db: Session) -> dict:
+    fila = db.get(models.Configuracion, "categorias_en")
+    try:
+        return json.loads(fila.valor) if fila else {}
+    except ValueError:
+        return {}
+
+
+def _guardar_ingles(db: Session, d: dict):
+    texto = json.dumps(d, ensure_ascii=False)
+    fila = db.get(models.Configuracion, "categorias_en")
+    if fila:
+        fila.valor = texto
+    else:
+        db.add(models.Configuracion(clave="categorias_en", valor=texto))
+
+
+def en_ingles(db: Session, nombre: str, guardado: dict | None = None) -> str:
+    """Nombre de la categoría en inglés: el que se guardó, o una sugerencia, o el mismo nombre."""
+    g = _ingles_guardado(db) if guardado is None else guardado
+    return g.get(nombre) or SUGERIDAS.get(nombre.strip().lower(), "") or nombre
 router = APIRouter(prefix="/api/categorias", dependencies=[Depends(usuario_actual)])
 
 
@@ -53,7 +86,17 @@ def ordenadas(db: Session, tipo: str) -> list[dict]:
     guardada = _lista_guardada(db)[tipo]
     usos = _usos(db, tipo)
     nombres = list(dict.fromkeys(guardada)) + sorted((n for n in usos if n not in guardada), key=str.lower)
-    return [{"nombre": n, "usos": usos.get(n, 0)} for n in nombres if n]
+    ing = _ingles_guardado(db) if tipo == "producto" else {}
+    salida = []
+    for n in nombres:
+        if not n:
+            continue
+        fila = {"nombre": n, "usos": usos.get(n, 0)}
+        if tipo == "producto":
+            fila["en"] = ing.get(n, "")
+            fila["en_sugerido"] = SUGERIDAS.get(n.strip().lower(), "")
+        salida.append(fila)
+    return salida
 
 
 def _tipo(t: str) -> str:
@@ -78,6 +121,11 @@ class Nueva(BaseModel):
 class Renombrar(BaseModel):
     anterior: str
     nuevo: str
+
+
+class Ingles(BaseModel):
+    nombre: str
+    en: str = Field(default="", max_length=80)
 
 
 class Orden(BaseModel):
@@ -117,6 +165,11 @@ def renombrar(tipo: str, d: Renombrar, db: Session = Depends(get_db)):
     lista[tipo] = [destino if n == anterior else n for n in actuales]
     lista[tipo] = list(dict.fromkeys(lista[tipo]))
     _guardar_lista(db, lista)
+    if tipo == "producto":
+        g = _ingles_guardado(db)
+        if anterior in g:
+            g.setdefault(destino, g.pop(anterior))
+            _guardar_ingles(db, g)
     db.commit()
     return ordenadas(db, tipo)
 
@@ -141,6 +194,22 @@ def borrar(tipo: str, nombre: str, mover_a: str | None = None, db: Session = Dep
         nombres.append(mover_a)
     lista[tipo] = nombres
     _guardar_lista(db, lista)
+    db.commit()
+    return ordenadas(db, tipo)
+
+
+@router.put("/{tipo}/ingles")
+def poner_ingles(tipo: str, d: Ingles, db: Session = Depends(get_db)):
+    """Nombre en inglés de una categoría de productos (para el menú en inglés)."""
+    if _tipo(tipo) != "producto":
+        raise HTTPException(400, "Solo las categorías de productos tienen nombre en inglés.")
+    g = _ingles_guardado(db)
+    en = " ".join(d.en.split())
+    if en:
+        g[d.nombre] = en
+    else:
+        g.pop(d.nombre, None)
+    _guardar_ingles(db, g)
     db.commit()
     return ordenadas(db, tipo)
 

@@ -59,6 +59,7 @@ def rec_dict(r: models.Receta) -> dict:
         "margen_objetivo_pct": r.margen_objetivo_pct, "precio_venta": r.precio_venta,
         "precio_competencia": r.precio_competencia, "notas": r.notas,
         "foto": r.foto, "descripcion_menu": r.descripcion_menu or "", "en_menu": bool(r.en_menu),
+        "nombre_en": r.nombre_en or "", "descripcion_menu_en": r.descripcion_menu_en or "",
         "arte": r.arte, "estilo_arte": r.estilo_arte or "auto", "quitar_fondo": r.quitar_fondo is not False,
         "actualizado": r.actualizado.isoformat() if r.actualizado else None,
         "items": [{"id": it.id, "ingrediente_id": it.ingrediente_id, "subreceta_id": it.subreceta_id,
@@ -280,20 +281,27 @@ def explotar(rec: dict, ctx: Contexto, factor: float, acum: dict, pila=()):
 
 def produccion(rec: dict, ctx: Contexto, cantidad: float) -> dict:
     """Lista de compras para producir `cantidad` en la unidad de rendimiento de la receta."""
-    factor = cantidad / float(rec["rinde_cantidad"])
+    res = compras([(rec, cantidad)], ctx)
+    return {"cantidad": cantidad, "unidad": rec["rinde_unidad"], "items": res["items"], "costo_total": res["costo_total"]}
+
+
+def compras(pedidos: list, ctx: Contexto) -> dict:
+    """Lista de compras combinada para varios productos: pedidos = [(receta, cantidad), ...]."""
     acum: dict[int, float] = {}
-    explotar(rec, ctx, factor, acum)
-    filas, total = [], 0.0
+    for rec, cantidad in pedidos:
+        explotar(rec, ctx, float(cantidad) / float(rec["rinde_cantidad"]), acum)
+    filas, total, total_compra = [], 0.0, 0.0
     for iid, q in sorted(acum.items(), key=lambda kv: ctx.ingredientes[kv[0]]["nombre"]):
         ing = ctx.ingredientes[iid]
         c = costos_ingrediente(ing)
         pres = next((p for p in c["presentaciones"] if p["id"] == c["presentacion_usada"]), None)
-        compras = math.ceil(q / pres["aprovechable_base"] - 1e-9) if pres and pres["aprovechable_base"] else None
+        n_compras = math.ceil(q / pres["aprovechable_base"] - 1e-9) if pres and pres["aprovechable_base"] else None
         costo = q * c["seleccionado"] if c["seleccionado"] is not None else None
         total += costo or 0
         filas.append({"ingrediente_id": iid, "nombre": ing["nombre"], "cantidad_base": q,
                       "unidad_base": ing["unidad_base"], "costo": costo,
                       "presentacion": (pres["descripcion"] or f"{pres['cantidad']} {pres['unidad']}") if pres else None,
                       "proveedor": pres["proveedor"] if pres else None,
-                      "comprar": compras, "costo_compra": compras * pres["precio"] if compras else None})
-    return {"cantidad": cantidad, "unidad": rec["rinde_unidad"], "items": filas, "costo_total": total}
+                      "comprar": n_compras, "costo_compra": n_compras * pres["precio"] if n_compras else None})
+        total_compra += (n_compras * pres["precio"]) if n_compras else 0
+    return {"items": filas, "costo_total": total, "costo_compra_total": total_compra}

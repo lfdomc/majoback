@@ -89,6 +89,8 @@ class RecetaIn(BaseModel):
     precio_competencia: float | None = Field(default=None, ge=0)
     notas: str = ""
     descripcion_menu: str = Field(default="", max_length=600)
+    nombre_en: str = Field(default="", max_length=160)
+    descripcion_menu_en: str = Field(default="", max_length=600)
     en_menu: bool = False
     items: list[ItemIn] = []
     @field_validator("rinde_unidad")
@@ -118,6 +120,9 @@ class ConfigIn(BaseModel):
 class NegocioIn(BaseModel):
     nombre: str = Field(default="", max_length=120)
     eslogan: str = Field(default="", max_length=160)
+    eslogan_en: str = Field(default="", max_length=160)
+    descripcion_en: str = Field(default="", max_length=800)
+    horario_en: str = Field(default="", max_length=300)
     lugar: str = Field(default="", max_length=120)
     descripcion: str = Field(default="", max_length=800)
     telefono: str = Field(default="", max_length=40)
@@ -133,3 +138,12 @@ class NegocioIn(BaseModel):
     color: str = Field(default="#D94C72", pattern=r"^#[0-9A-Fa-f]{6}$")
     mostrar_precios: bool = True
     distintivo: Literal["logo", "gorro", "ninguno"] = "logo"  # qué se muestra como logo
+
+
+class PedidoItem(BaseModel):
+    receta_id: int
+    cantidad: float = Field(gt=0, le=1_000_000)
+
+
+class ComprasIn(BaseModel):
+    items: list[PedidoItem] = Field(default_factory=list, max_length=200)

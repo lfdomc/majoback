@@ -7,7 +7,7 @@ from datetime import datetime
 
 from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -18,6 +18,8 @@ from .auth import (crear_token, hash_clave, registrar_fallo, revisar_bloqueo, so
 from .db import DB_PATH, Base, engine, get_db, migrar
 from . import arte as arte_mod
 from . import publicar
+from . import impresos
+from . import reportes
 from . import categorias as categorias_mod
 from .db import SessionLocal
 from .imagenes import MEDIA_DIR, abrir, borrar_imagen, guardar_imagen, guardar_pil
@@ -47,7 +49,7 @@ def _origenes() -> list[str]:
 
 origenes = _origenes()
 app.add_middleware(CORSMiddleware, allow_origins=origenes, allow_credentials=False,
-                   allow_methods=["*"], allow_headers=["*"])
+                   allow_methods=["*"], allow_headers=["*"], expose_headers=["Content-Disposition"])
 
 Auth = Depends(usuario_actual)
 app.include_router(categorias_mod.router)
@@ -334,7 +336,7 @@ def calcular_receta(d: schemas.RecetaBorrador, _=Auth, db: Session = Depends(get
 def _aplicar_receta(r: models.Receta, d: schemas.RecetaIn, db: Session):
     for k in ("nombre", "tipo", "categoria", "rinde_cantidad", "rinde_unidad", "merma_pct",
               "margen_objetivo_pct", "precio_venta", "precio_competencia", "notas",
-              "descripcion_menu", "en_menu"):
+              "descripcion_menu", "en_menu", "nombre_en", "descripcion_menu_en"):
         v = getattr(d, k)
         setattr(r, k, v.strip() if isinstance(v, str) else v)
     r.items = [models.RecetaItem(orden=n, ingrediente_id=it.ingrediente_id if not it.subreceta_id else None,
@@ -370,7 +372,8 @@ def editar_receta(rid: int, d: schemas.RecetaIn, _=Auth, db: Session = Depends(g
         _aplicar_receta(r, schemas.RecetaIn(**{k: v for k, v in respaldo.items() if k not in ("id", "actualizado", "foto")}), db)
         db.commit()
         raise HTTPException(400, str(e))
-    if r.foto and (respaldo["nombre"] != r.nombre or respaldo["precio_venta"] != r.precio_venta):
+    if r.foto and (respaldo["nombre"] != r.nombre or respaldo["precio_venta"] != r.precio_venta
+                   or (respaldo.get("nombre_en") or "") != (r.nombre_en or "")):
         generar_arte(db, r)
         db.commit()
     return {"id": r.id}
@@ -400,7 +403,7 @@ def borrar_receta(rid: int, _=Auth, db: Session = Depends(get_db)):
         .filter(models.RecetaItem.subreceta_id == rid).distinct().all()
     if usan:
         raise HTTPException(409, "No se puede borrar: se usa como sub-receta en " + ", ".join(x.nombre for x in usan))
-    for img in (r.foto, r.recorte, r.arte):
+    for img in (r.foto, r.recorte, r.arte, r.arte_en):
         borrar_imagen(img)
     db.delete(r)
     db.commit()
@@ -479,7 +482,8 @@ def generar_arte(db: Session, r: models.Receta, negocio: dict | None = None):
     """Compone la imagen tipo anuncio a partir de la foto, el nombre, el precio y el logo."""
     if not r.foto:
         borrar_imagen(r.arte)
-        r.arte = None
+        borrar_imagen(r.arte_en)
+        r.arte = r.arte_en = None
         return
     negocio = negocio or leer_negocio(db)
     try:
@@ -490,14 +494,23 @@ def generar_arte(db: Session, r: models.Receta, negocio: dict | None = None):
         if modo == "logo" and logo is None:
             modo = "ninguno"  # sin imagen subida: se firma con el nombre escrito
         precio = r.precio_venta if negocio.get("mostrar_precios", True) else None
-        img = arte_mod.componer(foto, rec, r.nombre, precio, negocio.get("color") or "#D94C72", logo,
-                                negocio.get("nombre") or "", arte_mod.estilo_para(r.estilo_arte, r.id), r.id,
-                                modo=modo, eslogan=negocio.get("eslogan") or "")
+
+        def hacer(nombre, eslogan):
+            return arte_mod.componer(foto, rec, nombre, precio, negocio.get("color") or "#D94C72", logo,
+                                     negocio.get("nombre") or "", arte_mod.estilo_para(r.estilo_arte, r.id), r.id,
+                                     modo=modo, eslogan=eslogan)
+        img = hacer(r.nombre, negocio.get("eslogan") or "")
+        # versión en inglés solo si el nombre en inglés es distinto
+        nombre_en = (r.nombre_en or "").strip()
+        img_en = hacer(nombre_en, negocio.get("eslogan_en") or negocio.get("eslogan") or "") \
+            if nombre_en and nombre_en.lower() != r.nombre.strip().lower() else None
     except Exception as e:
         print(f"No se pudo generar la imagen de {r.nombre}: {e}")
         return
     borrar_imagen(r.arte)
+    borrar_imagen(r.arte_en)
     r.arte = guardar_pil(img, "JPEG", quality=88, optimize=True, progressive=True)
+    r.arte_en = guardar_pil(img_en, "JPEG", quality=88, optimize=True, progressive=True) if img_en is not None else None
 
 
 def regenerar_todas():
@@ -566,9 +579,9 @@ def cambiar_precios(rid: int, d: schemas.PreciosIn, _=Auth, db: Session = Depend
 @app.delete("/api/recetas/{rid}/foto")
 def quitar_foto(rid: int, _=Auth, db: Session = Depends(get_db)):
     r = db.get(models.Receta, rid) or _404("Receta")
-    for img in (r.foto, r.recorte, r.arte):
+    for img in (r.foto, r.recorte, r.arte, r.arte_en):
         borrar_imagen(img)
-    r.foto = r.recorte = r.arte = None
+    r.foto = r.recorte = r.arte = r.arte_en = None
     db.commit()
     return {"ok": True}
 
@@ -613,7 +626,7 @@ def guardar_negocio(d: schemas.NegocioIn, tareas: BackgroundTasks, _=Depends(sol
     antes = leer_negocio(db)
     datos = {**antes, **d.model_dump()}
     _guardar_negocio(db, datos)
-    if any(antes.get(k) != datos.get(k) for k in ("color", "nombre", "mostrar_precios", "distintivo", "eslogan")):
+    if any(antes.get(k) != datos.get(k) for k in ("color", "nombre", "mostrar_precios", "distintivo", "eslogan", "eslogan_en")):
         tareas.add_task(regenerar_todas)
     return datos
 
@@ -653,13 +666,169 @@ def armar_menu(db: Session) -> dict:
     for r in recetas:
         cats.setdefault(r.categoria or "Otros", []).append({
             "id": r.id, "nombre": r.nombre, "descripcion": r.descripcion_menu or "",
+            "nombre_en": r.nombre_en or "", "descripcion_en": r.descripcion_menu_en or "",
             "precio": r.precio_venta if negocio.get("mostrar_precios", True) else None,
-            "foto": f"/media/{r.arte or r.foto}" if r.foto else None, "es_arte": bool(r.arte)})
+            "foto": f"/media/{r.arte or r.foto}" if r.foto else None, "es_arte": bool(r.arte),
+            "foto_en": f"/media/{r.arte_en}" if r.foto and r.arte_en else None})
     publico = {k: v for k, v in negocio.items() if k != "mostrar_precios"}
     publico["logo"] = f"/media/{negocio['logo']}" if negocio.get("logo") else None
     orden = {c["nombre"]: i for i, c in enumerate(categorias_mod.ordenadas(db, "producto"))}
     claves = sorted(cats, key=lambda k: (orden.get(k, len(orden)), k.lower()))
-    return {"negocio": publico, "categorias": [{"nombre": k, "productos": cats[k]} for k in claves]}
+    ing = categorias_mod._ingles_guardado(db)
+    return {"negocio": publico, "categorias": [{"nombre": k, "nombre_en": categorias_mod.en_ingles(db, k, ing), "productos": cats[k]}
+                                               for k in claves]}
+
+
+@app.get("/api/impresos")
+def lista_impresos(_=Auth):
+    return [{"clave": k, "nombre": v[0], "ancho": v[1], "alto": v[2], "descripcion": v[4]} for k, v in impresos.FORMATOS.items()]
+
+
+@app.get("/api/impresos/{formato}")
+def impreso(formato: str, url: str, tipo: str = "png", _=Auth, db: Session = Depends(get_db)):
+    """Diseño con el QR del menú. tipo: png | pdf | vista."""
+    if formato not in impresos.FORMATOS or tipo not in ("png", "pdf", "vista"):
+        raise HTTPException(404, "Formato no encontrado.")
+    if not re.match(r"^https?://[^\s]{3,300}$", url):
+        raise HTTPException(400, "Dirección del menú no válida.")
+    negocio = dict(leer_negocio(db))
+    if (negocio.get("distintivo") or "logo") == "logo" and negocio.get("logo"):
+        try:
+            negocio["_logo_img"] = abrir(negocio["logo"])
+        except OSError:
+            pass
+    cats = [c["nombre"] for c in armar_menu(db)["categorias"]]
+    img = impresos.generar(formato, negocio, url, cats)
+    datos, media = impresos.exportar(img, formato, tipo)
+    nombre = re.sub(r"[^a-z0-9]+", "-", (negocio.get("nombre") or "menu").lower()).strip("-") or "menu"
+    ext = {"png": "png", "pdf": "pdf", "vista": "jpg"}[tipo]
+    cab = {"Content-Disposition": f'attachment; filename="{nombre}-{formato}.{ext}"'} if tipo != "vista" else {"Cache-Control": "no-store"}
+    return Response(datos, media_type=media, headers=cab)
+
+
+# ------------------------------------------------------------------ reportes (Excel y PDF)
+def _rep_productos(ctx) -> "reportes.Reporte":
+    filas = []
+    for r in sorted((r for r in ctx.recetas.values() if r["tipo"] == "producto"), key=lambda r: (r["categoria"].lower(), r["nombre"].lower())):
+        x = _resumen(r, ctx)
+        try:
+            p = costing.costo_receta(r, ctx).get("precios", {})
+        except costing.ErrorConversion:
+            p = {}
+        filas.append([r["nombre"], r["categoria"], x["costo_por_rinde"], r.get("precio_venta"), x["precio_sugerido"],
+                      p.get("ganancia"), p.get("margen_real_pct"), r.get("precio_competencia"), p.get("diferencia_competencia"),
+                      "Sí" if r.get("en_menu") else "No", "Revisar" if x["errores"] else ""])
+    cols = [("Producto", "texto"), ("Categoría", "texto"), ("Costo por producto", "colones"), ("Precio de venta", "colones"),
+            ("Precio sugerido", "colones"), ("Ganancia por venta", "colones"), ("Margen real", "pct"),
+            ("Precio competencia", "colones"), ("Diferencia con competencia", "colones"), ("En el menú", "texto"), ("Estado", "texto")]
+    nota = "Ganancia = precio sin IVA menos costo. Diferencia negativa = más barato que la competencia."
+    return reportes.Reporte("Productos", f"{len(filas)} productos", [reportes.Seccion("Productos", cols, filas, nota=nota)], horizontal=True)
+
+
+def _rep_ingredientes(ctx) -> "reportes.Reporte":
+    filas = []
+    for i in sorted(ctx.ingredientes.values(), key=lambda i: (i["categoria"].lower(), i["nombre"].lower())):
+        c = costing.costos_ingrediente(i)
+        pres = next((p for p in c["presentaciones"] if p["id"] == c["presentacion_usada"]), None)
+        filas.append([i["nombre"], i["categoria"],
+                      (pres.get("descripcion") or f"{reportes.cant(pres['cantidad'])} {reportes.unidad(pres['unidad'])}") if pres else "",
+                      pres["precio"] if pres else None, pres.get("merma_pct") if pres else None,
+                      (pres.get("proveedor") or "") if pres else "", c["seleccionado"],
+                      f"por {reportes.unidad(i['unidad_base'])}", c["error"] or ""])
+    cols = [("Ingrediente", "texto"), ("Categoría", "texto"), ("Presentación usada", "texto"), ("Precio de compra", "colones"),
+            ("Merma", "pct"), ("Proveedor", "texto"), ("Costo por unidad mínima", "colones_unit"), ("Unidad", "texto"), ("Observación", "texto")]
+    return reportes.Reporte("Ingredientes", f"{len(filas)} ingredientes", [reportes.Seccion("Ingredientes", cols, filas)], horizontal=True)
+
+
+def _rep_recetas(ctx, tipo=None) -> "reportes.Reporte":
+    recs = sorted((r for r in ctx.recetas.values() if tipo is None or r["tipo"] == tipo),
+                  key=lambda r: (r["tipo"] != "producto", r["categoria"].lower(), r["nombre"].lower()))
+    resumen, secciones = [], []
+    for r in recs:
+        try:
+            c = costing.costo_receta(r, ctx)
+        except costing.ErrorConversion as e:
+            c = {"items": [], "totales": {}, "costo_por_rinde": None, "errores": [str(e)], "precios": {}}
+        rinde = f"{reportes.cant(r['rinde_cantidad'])} {reportes.unidad(r['rinde_unidad'])}"
+        tipo_txt = "Producto" if r["tipo"] == "producto" else "Sub-receta"
+        resumen.append([r["nombre"], tipo_txt, r["categoria"], rinde, c["totales"].get("seleccionado"), c.get("costo_por_rinde"),
+                        r.get("precio_venta") if r["tipo"] == "producto" else None])
+        filas = [[it["nombre"] or "—", "Sub-receta" if it["tipo"] == "subreceta" else "Ingrediente",
+                  f"{reportes.cant(it['cantidad'])} {reportes.unidad(it['unidad'])}", it["merma_pct"] or None,
+                  it["costo_unitario"], it["costo"], it["error"] or ""] for it in c["items"]]
+        cols = [("Ingrediente o sub-receta", "texto"), ("Tipo", "texto"), ("Cantidad", "cantidad"), ("Merma", "pct"),
+                ("Costo unitario", "colones_unit"), ("Costo", "colones"), ("Observación", "texto")]
+        total = ["Total de la receta", "", f"Rinde {rinde}", r.get("merma_pct") or None, None, c["totales"].get("seleccionado"), ""]
+        nota = f"Costo por {reportes.unidad(r['rinde_unidad'])}: {reportes.texto(c.get('costo_por_rinde'), 'colones_unit')}"
+        if r["tipo"] == "producto" and r.get("precio_venta"):
+            nota += f" · Precio de venta: {reportes.texto(r['precio_venta'], 'colones')}"
+        if r.get("notas"):
+            nota += f" · Notas: {r['notas']}"
+        secciones.append(reportes.Seccion(f"{r['nombre']} · {tipo_txt} · {r['categoria']}", cols, filas, total=total, nota=nota, hoja=r["nombre"]))
+    cols_res = [("Receta", "texto"), ("Tipo", "texto"), ("Categoría", "texto"), ("Rinde", "cantidad"), ("Costo total", "colones"),
+                ("Costo por unidad de rendimiento", "colones_unit"), ("Precio de venta", "colones")]
+    titulo = {"producto": "Productos con su receta", "subreceta": "Sub-recetas"}.get(tipo, "Recetas")
+    return reportes.Reporte(titulo, f"{len(recs)} recetas con sus ingredientes",
+                            [reportes.Seccion("Resumen", cols_res, resumen, hoja="Resumen")] + secciones)
+
+
+def _rep_compras(ctx, pedidos) -> "reportes.Reporte":
+    pares = [(ctx.recetas[p.receta_id], p.cantidad) for p in pedidos if p.receta_id in ctx.recetas and p.cantidad > 0]
+    if not pares:
+        raise HTTPException(400, "Elija al menos un producto y la cantidad a preparar.")
+    try:
+        res = costing.compras(pares, ctx)
+    except costing.ErrorConversion as e:
+        raise HTTPException(400, str(e))
+    filas = sorted(([x["proveedor"] or "Sin proveedor", x["nombre"], reportes.cantidad_legible(x["cantidad_base"], x["unidad_base"]),
+                     f"{x['comprar']} × {x['presentacion']}" if x["comprar"] else "Sin presentación de compra",
+                     x["costo_compra"], x["costo"]] for x in res["items"]), key=lambda f: (f[0] == "Sin proveedor", f[0].lower(), f[1].lower()))
+    cols = [("Proveedor", "texto"), ("Ingrediente", "texto"), ("Cantidad necesaria", "cantidad"), ("Comprar", "texto"),
+            ("Costo de la compra", "colones"), ("Costo de lo que se usa", "colones")]
+    total = ["Total", "", "", "", res["costo_compra_total"], res["costo_total"]]
+    pedido = [[r["nombre"], f"{reportes.cant(q)} {reportes.unidad(r['rinde_unidad'])}"] for r, q in pares]
+    secs = [reportes.Seccion("Qué se va a preparar", [("Producto o receta", "texto"), ("Cantidad", "cantidad")], pedido, hoja="Pedido"),
+            reportes.Seccion("Lista de compras", cols, filas, total=total, hoja="Lista de compras",
+                             nota="«Costo de la compra» es lo que paga al comprar presentaciones completas; «Costo de lo que se usa» es solo lo que lleva la receta.")]
+    return reportes.Reporte("Lista de compras", f"{len(filas)} ingredientes para {len(pares)} productos", secs, horizontal=True)
+
+
+def _enviar_reporte(rep, formato, db, nombre):
+    if formato not in ("pdf", "xlsx"):
+        raise HTTPException(400, "Formato no válido: use pdf o xlsx.")
+    negocio = leer_negocio(db).get("nombre") or ""
+    datos, media, ext = reportes.exportar(rep, negocio, formato)
+    fecha = datetime.now().strftime("%Y-%m-%d")
+    return Response(datos, media_type=media, headers={"Content-Disposition": f'attachment; filename="{nombre}-{fecha}.{ext}"'})
+
+
+@app.get("/api/reportes/{que}")
+def reporte(que: str, formato: str = "pdf", _=Auth, db: Session = Depends(get_db)):
+    ctx = costing.cargar_contexto(db)
+    armar = {"productos": lambda: _rep_productos(ctx), "ingredientes": lambda: _rep_ingredientes(ctx),
+             "recetas": lambda: _rep_recetas(ctx), "recetas-productos": lambda: _rep_recetas(ctx, "producto"),
+             "subrecetas": lambda: _rep_recetas(ctx, "subreceta")}
+    if que not in armar:
+        raise HTTPException(404, "Reporte no encontrado.")
+    return _enviar_reporte(armar[que](), formato, db, que)
+
+
+@app.post("/api/reportes/compras")
+def reporte_compras(d: schemas.ComprasIn, formato: str = "pdf", _=Auth, db: Session = Depends(get_db)):
+    return _enviar_reporte(_rep_compras(costing.cargar_contexto(db), d.items), formato, db, "lista-de-compras")
+
+
+@app.post("/api/compras")
+def lista_compras(d: schemas.ComprasIn, _=Auth, db: Session = Depends(get_db)):
+    """Lista de compras combinada para varios productos (vista en pantalla)."""
+    ctx = costing.cargar_contexto(db)
+    pares = [(ctx.recetas[p.receta_id], p.cantidad) for p in d.items if p.receta_id in ctx.recetas and p.cantidad > 0]
+    if not pares:
+        return {"items": [], "costo_total": 0, "costo_compra_total": 0}
+    try:
+        return costing.compras(pares, ctx)
+    except costing.ErrorConversion as e:
+        raise HTTPException(400, str(e))
 
 
 @app.get("/media/{nombre}")
