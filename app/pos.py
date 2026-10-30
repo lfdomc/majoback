@@ -37,14 +37,23 @@ def catalogo(_=Depends(usuario_actual), db: Session = Depends(get_db)):
     orden = {c["nombre"]: i for i, c in enumerate(categorias_mod.ordenadas(db, "producto"))}
     cats: dict[str, list] = defaultdict(list)
     for r in sorted(prods, key=lambda r: (not r.get("en_menu"), r["nombre"].lower())):
-        cats[r["categoria"]].append({"id": r["id"], "nombre": r["nombre"], "precio": r["precio_venta"], "en_menu": bool(r.get("en_menu"))})
+        cats[r["categoria"]].append({"id": r["id"], "nombre": r["nombre"], "precio": r["precio_venta"], "en_menu": bool(r.get("en_menu")),
+                                     "foto": f"/media/mini/{r['foto']}" if r.get("foto") else None})
     claves = sorted(cats, key=lambda k: (orden.get(k, len(orden)), k.lower()))
+    col = categorias_mod.colores(db)
     return {
         "negocio": {"nombre": neg.get("nombre") or "", "color": neg.get("color") or "#D94C72",
                     "sinpe": neg.get("sinpe") or neg.get("whatsapp") or neg.get("telefono") or "",
-                    "sinpe_nombre": neg.get("sinpe_nombre") or ""},
+                    "sinpe_nombre": neg.get("sinpe_nombre") or "",
+                    # para el comprobante
+                    "regimen": neg.get("regimen") or "simplificado", "contribuyente": neg.get("contribuyente") or "",
+                    "cedula_tipo": neg.get("cedula_tipo") or "fisica", "cedula": neg.get("cedula") or "",
+                    "actividad": neg.get("actividad") or "", "direccion": neg.get("direccion_fiscal") or neg.get("direccion") or "",
+                    "telefono": neg.get("telefono") or neg.get("whatsapp") or "", "email": neg.get("email") or "",
+                    "leyenda": neg.get("leyenda_comprobante") or ""},
         "iva_incluido": ctx.config["aplicar_iva"], "iva_pct": ctx.config["iva_pct"],
-        "categorias": [{"nombre": k, "productos": cats[k]} for k in claves],
+        "categorias": [{"nombre": k, "color": col.get(k) or categorias_mod.COLORES[i % len(categorias_mod.COLORES)], "productos": cats[k]}
+                       for i, k in enumerate(claves)],
         "actualizado": ahora_cr().isoformat(timespec="seconds"),
     }
 

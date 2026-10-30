@@ -327,3 +327,33 @@ def test_pos(h):
     assert c.get("/api/reportes/ventas", headers=h, params={"formato": "pdf"}).status_code == 200
     res = c.post("/api/costos/usar-ventas-reales", headers=h).json()
     assert any(p["id"] == prod["id"] and p["ventas_mes"] == 3 for p in res["productos"])
+
+
+def test_pos_colores_y_fotos(h):
+    cat = c.get("/api/pos/catalogo", headers=h).json()
+    assert all(k["color"].startswith("#") for k in cat["categorias"])
+    nombre = cat["categorias"][0]["nombre"]
+    lista = c.put("/api/categorias/producto/color", headers=h, json={"nombre": nombre, "color": "#123456"}).json()
+    assert next(x for x in lista if x["nombre"] == nombre)["color"] == "#123456"
+    assert c.get("/api/pos/catalogo", headers=h).json()["categorias"][0]["color"] == "#123456"
+    # miniatura de una foto
+    from PIL import Image
+    import io
+    buf = io.BytesIO(); Image.new("RGB", (800, 500), (200, 50, 80)).save(buf, "JPEG")
+    pid = cat["categorias"][0]["productos"][0]["id"]
+    assert c.post(f"/api/recetas/{pid}/foto", headers=h, files={"archivo": ("f.jpg", buf.getvalue(), "image/jpeg")}).status_code == 200
+    foto = next(p for k in c.get("/api/pos/catalogo", headers=h).json()["categorias"] for p in k["productos"] if p["id"] == pid)["foto"]
+    r = c.get(foto)
+    assert r.status_code == 200 and r.headers["content-type"] == "image/webp"
+    assert Image.open(io.BytesIO(r.content)).size == (240, 240)
+
+
+def test_datos_tributarios_privados(h):
+    neg = c.get("/api/negocio", headers=h).json()
+    neg.pop("logo", None)
+    c.put("/api/negocio", headers=h, json={**neg, "regimen": "simplificado", "contribuyente": "María Pérez", "cedula": "112340567",
+                                           "actividad": "Venta de helados", "sinpe": "88881234"})
+    cat = c.get("/api/pos/catalogo", headers=h).json()["negocio"]
+    assert cat["cedula"] == "112340567" and cat["regimen"] == "simplificado" and cat["contribuyente"] == "María Pérez"
+    publico = c.get("/api/publico/menu").json()["negocio"]
+    assert "cedula" not in publico and "contribuyente" not in publico and "sinpe" not in publico

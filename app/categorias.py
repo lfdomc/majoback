@@ -44,6 +44,25 @@ def _guardar_ingles(db: Session, d: dict):
         db.add(models.Configuracion(clave="categorias_en", valor=texto))
 
 
+# Colores para distinguir las categorías en la caja (se pueden cambiar en Categorías)
+COLORES = ["#E4572E", "#2E86AB", "#F3A712", "#8E44AD", "#27AE60", "#D94C72", "#16A085", "#D35400",
+           "#6C5CE7", "#C0392B", "#00897B", "#7F8C8D"]
+
+
+def _colores_guardados(db: Session) -> dict:
+    fila = db.get(models.Configuracion, "categorias_color")
+    try:
+        return json.loads(fila.valor) if fila else {}
+    except ValueError:
+        return {}
+
+
+def colores(db: Session) -> dict[str, str]:
+    """Color de cada categoría de productos: el elegido, o uno de la paleta según su posición."""
+    g = _colores_guardados(db)
+    return {c["nombre"]: g.get(c["nombre"]) or COLORES[i % len(COLORES)] for i, c in enumerate(ordenadas(db, "producto"))}
+
+
 def en_ingles(db: Session, nombre: str, guardado: dict | None = None) -> str:
     """Nombre de la categoría en inglés: el que se guardó, o una sugerencia, o el mismo nombre."""
     g = _ingles_guardado(db) if guardado is None else guardado
@@ -87,6 +106,7 @@ def ordenadas(db: Session, tipo: str) -> list[dict]:
     usos = _usos(db, tipo)
     nombres = list(dict.fromkeys(guardada)) + sorted((n for n in usos if n not in guardada), key=str.lower)
     ing = _ingles_guardado(db) if tipo == "producto" else {}
+    col = _colores_guardados(db) if tipo == "producto" else {}
     salida = []
     for n in nombres:
         if not n:
@@ -95,6 +115,7 @@ def ordenadas(db: Session, tipo: str) -> list[dict]:
         if tipo == "producto":
             fila["en"] = ing.get(n, "")
             fila["en_sugerido"] = SUGERIDAS.get(n.strip().lower(), "")
+            fila["color"] = col.get(n) or COLORES[len(salida) % len(COLORES)]
         salida.append(fila)
     return salida
 
@@ -126,6 +147,11 @@ class Renombrar(BaseModel):
 class Ingles(BaseModel):
     nombre: str
     en: str = Field(default="", max_length=80)
+
+
+class Color(BaseModel):
+    nombre: str
+    color: str = Field(default="", pattern=r"^(#[0-9A-Fa-f]{6})?$")
 
 
 class Orden(BaseModel):
@@ -170,6 +196,11 @@ def renombrar(tipo: str, d: Renombrar, db: Session = Depends(get_db)):
         if anterior in g:
             g.setdefault(destino, g.pop(anterior))
             _guardar_ingles(db, g)
+        gc = _colores_guardados(db)
+        if anterior in gc:
+            gc.setdefault(destino, gc.pop(anterior))
+            fila = db.get(models.Configuracion, "categorias_color")
+            fila.valor = json.dumps(gc, ensure_ascii=False)
     db.commit()
     return ordenadas(db, tipo)
 
@@ -210,6 +241,26 @@ def poner_ingles(tipo: str, d: Ingles, db: Session = Depends(get_db)):
     else:
         g.pop(d.nombre, None)
     _guardar_ingles(db, g)
+    db.commit()
+    return ordenadas(db, tipo)
+
+
+@router.put("/{tipo}/color")
+def poner_color(tipo: str, d: Color, db: Session = Depends(get_db)):
+    """Color de una categoría de productos (para la caja). Vacío = automático."""
+    if _tipo(tipo) != "producto":
+        raise HTTPException(400, "Solo las categorías de productos tienen color.")
+    g = _colores_guardados(db)
+    if d.color:
+        g[d.nombre] = d.color.upper()
+    else:
+        g.pop(d.nombre, None)
+    texto = json.dumps(g, ensure_ascii=False)
+    fila = db.get(models.Configuracion, "categorias_color")
+    if fila:
+        fila.valor = texto
+    else:
+        db.add(models.Configuracion(clave="categorias_color", valor=texto))
     db.commit()
     return ordenadas(db, tipo)
 

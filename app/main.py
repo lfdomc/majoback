@@ -676,7 +676,9 @@ def armar_menu(db: Session) -> dict:
             "precio": r.precio_venta if negocio.get("mostrar_precios", True) else None,
             "foto": f"/media/{r.arte or r.foto}" if r.foto else None, "es_arte": bool(r.arte),
             "foto_en": f"/media/{r.arte_en}" if r.foto and r.arte_en else None})
-    publico = {k: v for k, v in negocio.items() if k != "mostrar_precios"}
+    privados = {"mostrar_precios", "regimen", "contribuyente", "cedula_tipo", "cedula", "actividad", "direccion_fiscal",
+                "leyenda_comprobante", "sinpe", "sinpe_nombre"}
+    publico = {k: v for k, v in negocio.items() if k not in privados}
     publico["logo"] = f"/media/{negocio['logo']}" if negocio.get("logo") else None
     orden = {c["nombre"]: i for i, c in enumerate(categorias_mod.ordenadas(db, "producto"))}
     claves = sorted(cats, key=lambda k: (orden.get(k, len(orden)), k.lower()))
@@ -880,6 +882,26 @@ def lista_compras(d: schemas.ComprasIn, _=Auth, db: Session = Depends(get_db)):
         return costing.compras(pares, ctx)
     except costing.ErrorConversion as e:
         raise HTTPException(400, str(e))
+
+
+@app.get("/media/mini/{nombre}")
+def media_mini(nombre: str):
+    """Miniatura cuadrada (240 px) para los botones de la caja; se genera una vez y se guarda."""
+    if not re.fullmatch(r"[0-9a-f]{32}\.(webp|png|jpg)", nombre):
+        raise HTTPException(404, "Imagen no encontrada.")
+    original = os.path.join(MEDIA_DIR, nombre)
+    if not os.path.exists(original):
+        raise HTTPException(404, "Imagen no encontrada.")
+    carpeta = os.path.join(MEDIA_DIR, "mini")
+    destino = os.path.join(carpeta, nombre.rsplit(".", 1)[0] + ".webp")
+    if not os.path.exists(destino):
+        from PIL import Image, ImageOps
+        os.makedirs(carpeta, exist_ok=True)
+        with Image.open(original) as im:
+            im = ImageOps.exif_transpose(im).convert("RGB")
+            im = ImageOps.fit(im, (240, 240), Image.LANCZOS)
+            im.save(destino, "WEBP", quality=78)
+    return FileResponse(destino, media_type="image/webp", headers={"Cache-Control": "public, max-age=31536000, immutable"})
 
 
 @app.get("/media/{nombre}")

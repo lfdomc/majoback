@@ -130,6 +130,14 @@ class NegocioIn(BaseModel):
     whatsapp: str = Field(default="", max_length=40)
     sinpe: str = Field(default="", max_length=40)          # número para SINPE Móvil (se muestra al cobrar)
     sinpe_nombre: str = Field(default="", max_length=120)  # a nombre de quién está
+    # Datos tributarios para el comprobante (no se publican en el menú)
+    regimen: Literal["simplificado", "tradicional", "ninguno"] = "simplificado"
+    contribuyente: str = Field(default="", max_length=160)       # nombre o razón social ante Hacienda
+    cedula_tipo: Literal["fisica", "juridica", "dimex", "nite"] = "fisica"
+    cedula: str = Field(default="", max_length=20)
+    actividad: str = Field(default="", max_length=160)           # actividad económica (código y descripción)
+    direccion_fiscal: str = Field(default="", max_length=300)
+    leyenda_comprobante: str = Field(default="", max_length=400)  # vacío = la leyenda del régimen
     email: str = Field(default="", max_length=120)
     direccion: str = Field(default="", max_length=300)
     mapa: str = Field(default="", max_length=500)
