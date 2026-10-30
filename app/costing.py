@@ -79,6 +79,8 @@ def leer_config(db: Session) -> dict:
         "nombre_negocio": cfg["nombre_negocio"],
         "ventas_estimadas_mes": float(cfg.get("ventas_estimadas_mes") or 0),
         "dias_trabajo_mes": float(cfg.get("dias_trabajo_mes") or 26),
+        "reparto_fijos": cfg.get("reparto_fijos") if cfg.get("reparto_fijos") in ("unidad", "precio") else "unidad",
+        "unidades_estimadas_mes": float(cfg.get("unidades_estimadas_mes") or 0),
     }
 
 
@@ -123,11 +125,24 @@ def gastos_negocio(db: Session, recetas: dict, cfg: dict) -> dict:
                        for r in recetas.values()
                        if r["tipo"] == "producto" and r.get("precio_venta") and r.get("ventas_mes"))
     unidades = sum(float(r["ventas_mes"]) for r in recetas.values() if r["tipo"] == "producto" and r.get("ventas_mes"))
-    if por_producto > 0:
+    general = float(cfg.get("ventas_estimadas_mes") or 0)
+    # Si puso unidades solo en algunos productos y además un monto general mayor, el general es más completo.
+    if por_producto > 0 and por_producto >= general:
         ventas, fuente = por_producto, "productos"
     else:
-        ventas, fuente = float(cfg.get("ventas_estimadas_mes") or 0), "general"
+        ventas, fuente = general, "general"
+    con_precio = [r for r in recetas.values() if r["tipo"] == "producto" and r.get("precio_venta")]
+    con_unidades = [r for r in con_precio if r.get("ventas_mes")]
+    # Reparto por unidad: cada producto vendido carga lo mismo = costos fijos del mes ÷ productos que vende al mes
+    if unidades > 0:
+        unidades_reparto, fuente_unidades = unidades, "productos"
+    else:
+        unidades_reparto, fuente_unidades = float(cfg.get("unidades_estimadas_mes") or 0), "general"
     return {"fijos_mes": fijos, "variable_pct": var_pct, "variable_unidad": var_uni, "ventas_mes": ventas,
+            "reparto": cfg.get("reparto_fijos", "unidad"), "unidades_reparto": unidades_reparto,
+            "fuente_unidades": fuente_unidades,
+            "fijo_unidad": (fijos / unidades_reparto) if unidades_reparto > 0 else None,
+            "productos_con_precio": len(con_precio), "productos_con_unidades": len(con_unidades),
             "unidades_mes": unidades, "fuente_ventas": fuente, "fijo_pct": (fijos / ventas) if ventas > 0 else None,
             "dias_trabajo_mes": dias}
 
@@ -305,21 +320,36 @@ def precios(rec: dict, costo: dict, cfg: dict) -> dict:
     # ---- ganancia real: además de ingredientes, los costos variables y la parte de los costos fijos
     g = cfg.get("negocio")
     if g and rec.get("tipo", "producto") == "producto":
+        por_unidad = g["reparto"] == "unidad"
+        out["reparto"] = g["reparto"]
         out["variable_pct"] = g["variable_pct"] * 100
         out["variable_unidad"] = g["variable_unidad"]
-        out["fijo_pct"] = g["fijo_pct"] * 100 if g["fijo_pct"] is not None else None
+        out["fijos_mes"] = g["fijos_mes"]
+        out["ventas_mes"] = g["ventas_mes"]
+        out["unidades_reparto"] = g["unidades_reparto"]
+        out["fijo_unidad"] = g["fijo_unidad"] if por_unidad else None
+        out["fijo_pct"] = g["fijo_pct"] * 100 if (not por_unidad and g["fijo_pct"] is not None) else None
         # precio mínimo para no perder (cubre ingredientes, variables y su parte de los fijos)
-        resto = 1 - g["variable_pct"] - (g["fijo_pct"] or 0)
-        if resto > 0:
-            eq = (c + g["variable_unidad"]) / resto
-            out["precio_equilibrio_sin_iva"] = eq
-            out["precio_equilibrio"] = eq * (1 + iva)
+        if por_unidad:
+            resto = 1 - g["variable_pct"]
+            eq = (c + g["variable_unidad"] + (g["fijo_unidad"] or 0)) / resto if resto > 0 and g["fijo_unidad"] is not None else None
         else:
-            out["precio_equilibrio_sin_iva"] = out["precio_equilibrio"] = None
+            resto = 1 - g["variable_pct"] - (g["fijo_pct"] or 0)
+            eq = (c + g["variable_unidad"]) / resto if resto > 0 and g["fijo_pct"] is not None else None
+        out["precio_equilibrio_sin_iva"] = eq
+        out["precio_equilibrio"] = eq * (1 + iva) if eq is not None else None
         base = out["precio_venta_sin_iva"]
+        # Aviso: la parte de fijos es más que el precio (casi siempre faltan unidades al mes)
+        if por_unidad:
+            out["fijos_exceden_ventas"] = bool(g["fijo_unidad"] is not None and base and g["fijo_unidad"] >= base)
+        else:
+            out["fijos_exceden_ventas"] = bool(g["fijo_pct"] is not None and g["fijo_pct"] >= 1)
         if base:
             var = g["variable_unidad"] + base * g["variable_pct"]
-            fijo = base * g["fijo_pct"] if g["fijo_pct"] is not None else None
+            if por_unidad:
+                fijo = g["fijo_unidad"]
+            else:
+                fijo = base * g["fijo_pct"] if g["fijo_pct"] is not None else None
             out["costo_variable"] = var
             out["costo_fijo"] = fijo
             out["contribucion"] = base - c - var                      # lo que deja para pagar fijos y ganar

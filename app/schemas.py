@@ -128,6 +128,8 @@ class NegocioIn(BaseModel):
     descripcion: str = Field(default="", max_length=800)
     telefono: str = Field(default="", max_length=40)
     whatsapp: str = Field(default="", max_length=40)
+    sinpe: str = Field(default="", max_length=40)          # número para SINPE Móvil (se muestra al cobrar)
+    sinpe_nombre: str = Field(default="", max_length=120)  # a nombre de quién está
     email: str = Field(default="", max_length=120)
     direccion: str = Field(default="", max_length=300)
     mapa: str = Field(default="", max_length=500)

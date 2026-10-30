@@ -91,6 +91,8 @@ class CostoIn(BaseModel):
 class AjustesIn(BaseModel):
     ventas_estimadas_mes: float = Field(default=0, ge=0)
     dias_trabajo_mes: float = Field(default=26, gt=0, le=31)
+    reparto_fijos: Literal["unidad", "precio"] = "unidad"
+    unidades_estimadas_mes: float = Field(default=0, ge=0)
 
 
 class VentaIn(BaseModel):
@@ -158,6 +160,19 @@ def ventas_producto(rid: int, d: VentaIn, db: Session = Depends(get_db)):
     return resumen(db)
 
 
+@router.post("/usar-ventas-reales")
+def usar_ventas_reales(db: Session = Depends(get_db)):
+    """Pone en cada producto las unidades vendidas en el POS en los últimos 30 días."""
+    from .pos import unidades_ultimos_30
+    u = unidades_ultimos_30(db)
+    if not u:
+        raise HTTPException(400, "Todavía no hay ventas en el POS de los últimos 30 días.")
+    for r in db.query(models.Receta).filter(models.Receta.tipo == "producto").all():
+        r.ventas_mes = u.get(r.id) or None
+    db.commit()
+    return resumen(db)
+
+
 @router.get("/resumen")
 def resumen(db: Session = Depends(get_db)):
     """Cuadro del mes: ventas, costos, ganancia y punto de equilibrio, y el detalle por producto."""
@@ -197,6 +212,10 @@ def resumen(db: Session = Depends(get_db)):
         aporte_total = ventas * contribucion_pct if contribucion_pct is not None else 0
         ingredientes_total = variables_total = None
     equilibrio = g["fijos_mes"] / contribucion_pct if contribucion_pct and contribucion_pct > 0 else None
+    # en unidades: cuántos productos hay que vender al mes, con el aporte promedio por producto
+    unidades_con_precio = sum(float(x["ventas_mes"] or 0) for x in productos if x.get("aporte_mes") is not None)
+    aporte_unidad = (aporte_total / unidades_con_precio) if g["fuente_ventas"] == "productos" and unidades_con_precio else None
+    equilibrio_unidades = g["fijos_mes"] / aporte_unidad if aporte_unidad and aporte_unidad > 0 else None
     return {
         "fijos_mes": g["fijos_mes"], "variable_pct": g["variable_pct"] * 100, "variable_unidad": g["variable_unidad"],
         "ventas_mes": ventas, "unidades_mes": g["unidades_mes"], "fuente_ventas": g["fuente_ventas"],
@@ -207,4 +226,8 @@ def resumen(db: Session = Depends(get_db)):
         "equilibrio_mes": equilibrio, "equilibrio_dia": equilibrio / g["dias_trabajo_mes"] if equilibrio else None,
         "dias_trabajo_mes": g["dias_trabajo_mes"], "ventas_estimadas_mes": cfg["ventas_estimadas_mes"],
         "iva_incluido": cfg["aplicar_iva"], "productos": productos,
+        "productos_con_precio": g["productos_con_precio"], "productos_con_unidades": g["productos_con_unidades"],
+        "reparto": g["reparto"], "fijo_unidad": g["fijo_unidad"], "unidades_reparto": g["unidades_reparto"],
+        "fuente_unidades": g["fuente_unidades"], "unidades_estimadas_mes": cfg["unidades_estimadas_mes"],
+        "equilibrio_unidades": equilibrio_unidades,
     }

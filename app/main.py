@@ -3,14 +3,14 @@ import os
 import threading
 import re
 import tempfile
-from datetime import datetime
+from datetime import date, datetime
 
 from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from . import costing, models, schemas
 from .auth import (crear_token, hash_clave, registrar_fallo, revisar_bloqueo, solo_admin,
@@ -22,6 +22,7 @@ from . import impresos
 from . import reportes
 from . import categorias as categorias_mod
 from . import costos as costos_mod
+from . import pos as pos_mod
 from .db import SessionLocal
 from .imagenes import MEDIA_DIR, abrir, borrar_imagen, guardar_imagen, guardar_pil
 from .seed import inicializar
@@ -55,6 +56,7 @@ app.add_middleware(CORSMiddleware, allow_origins=origenes, allow_credentials=Fal
 Auth = Depends(usuario_actual)
 app.include_router(categorias_mod.router)
 app.include_router(costos_mod.router)
+app.include_router(pos_mod.router)
 
 
 def _guardar(db: Session, msg_dup: str):
@@ -813,8 +815,46 @@ def _enviar_reporte(rep, formato, db, nombre):
     return Response(datos, media_type=media, headers={"Content-Disposition": f'attachment; filename="{nombre}-{fecha}.{ext}"'})
 
 
+def _rep_ventas(db, desde, hasta) -> "reportes.Reporte":
+    r = pos_mod.resumen_ventas(db, desde, hasta, "mes" if (desde.day == 1 and (hasta + pos_mod.timedelta(days=1)).day == 1
+                                                           and desde.month == hasta.month) else ("dia" if desde == hasta else "rango"))
+    ventas = db.query(models.Venta).options(selectinload(models.Venta.items)).filter(
+        models.Venta.dia >= desde, models.Venta.dia <= hasta).order_by(models.Venta.fecha).all()
+    resumen = [["Ventas", r["total"]], ["Ventas sin IVA", r["total_sin_iva"]], ["− Ingredientes", r["ingredientes"]],
+               ["− Costos variables", r["variables"]], ["Ganancia bruta", r["ganancia_bruta"]],
+               ["− Parte de costos fijos del periodo", r["fijos_periodo"]], ["Ganancia real", r["ganancia_real"]],
+               ["Venta promedio", r["ticket_promedio"]]]
+    secs = [
+        reportes.Seccion("Resumen", [("Concepto", "texto"), ("Monto", "colones")], resumen, hoja="Resumen",
+                         nota=f"{r['ventas']} ventas · {reportes.cant(r['unidades'])} productos vendidos. "
+                              "Los costos fijos se reparten según los días del periodo."),
+        reportes.Seccion("Por producto", [("Producto", "texto"), ("Categoría", "texto"), ("Cantidad", "num"), ("Ventas", "colones"),
+                                          ("Ganancia bruta", "colones")],
+                         [[p["nombre"], p["categoria"], p["cantidad"], p["total"], p["ganancia_bruta"]] for p in r["por_producto"]],
+                         total=["Total", "", r["unidades"], r["total"], r["ganancia_bruta"]], hoja="Por producto"),
+        reportes.Seccion("Por forma de pago", [("Forma de pago", "texto"), ("Ventas", "num"), ("Monto", "colones")],
+                         [[{"efectivo": "Efectivo", "sinpe": "SINPE Móvil"}.get(p["forma_pago"], p["forma_pago"]), p["ventas"], p["total"]]
+                          for p in r["por_pago"]], hoja="Formas de pago"),
+        reportes.Seccion("Detalle de ventas", [("Fecha", "texto"), ("Productos", "texto"), ("Pago", "texto"), ("Total", "colones"),
+                                               ("Ganancia bruta", "colones"), ("Estado", "texto")],
+                         [[v.fecha.strftime("%d/%m/%Y %H:%M"), ", ".join(f"{reportes.cant(i.cantidad)} × {i.nombre}" for i in v.items),
+                           "SINPE Móvil" if v.forma_pago == "sinpe" else "Efectivo", v.total,
+                           v.total_sin_iva - v.costo_ingredientes - v.costo_variable, "Anulada" if v.anulada else ""] for v in ventas],
+                         hoja="Detalle"),
+    ]
+    rango_txt = desde.strftime("%d/%m/%Y") + ("" if desde == hasta else " al " + hasta.strftime("%d/%m/%Y"))
+    return reportes.Reporte("Ventas", rango_txt, secs, horizontal=True)
+
+
 @app.get("/api/reportes/{que}")
-def reporte(que: str, formato: str = "pdf", _=Auth, db: Session = Depends(get_db)):
+def reporte(que: str, formato: str = "pdf", desde: date | None = None, hasta: date | None = None,
+            _=Auth, db: Session = Depends(get_db)):
+    if que == "ventas":
+        hoy = pos_mod.hoy_cr()
+        d, h = desde or hoy.replace(day=1), hasta or hoy
+        if h < d:
+            raise HTTPException(400, "La fecha final es anterior a la inicial.")
+        return _enviar_reporte(_rep_ventas(db, d, h), formato, db, f"ventas-{d.isoformat()}")
     ctx = costing.cargar_contexto(db)
     armar = {"productos": lambda: _rep_productos(ctx), "ingredientes": lambda: _rep_ingredientes(ctx),
              "recetas": lambda: _rep_recetas(ctx), "recetas-productos": lambda: _rep_recetas(ctx, "producto"),
@@ -871,7 +911,7 @@ def publicar_menu(_=Auth):
     return publicar.publicar_ahora(_menu_actual)
 
 
-NO_PUBLICAN = ("/api/auth", "/api/recetas/calcular", "/api/publicacion", "/api/produccion", "/api/costos", "/api/reportes", "/api/compras")
+NO_PUBLICAN = ("/api/auth", "/api/recetas/calcular", "/api/publicacion", "/api/produccion", "/api/costos", "/api/reportes", "/api/compras", "/api/pos")
 
 
 @app.middleware("http")

@@ -264,11 +264,66 @@ def test_costos_negocio(h):
     assert round(p["costo_variable"], 6) == 45          # 20 + 2,5 % de 1000
     assert round(p["costo_fijo"], 6) == 110             # 11 % de 1000
     assert round(p["ganancia_real"], 6) == 645          # 1000 - 200 - 45 - 110
-    assert round(p["precio_equilibrio"], 2) == round(220 / 0.865, 2)
+    # reparto por unidad (por defecto): ₡110 000 ÷ 1000 productos = ₡110 por producto
+    assert p["reparto"] == "unidad" and round(p["fijo_unidad"], 6) == 110
+    assert round(p["precio_equilibrio"], 2) == round((200 + 20 + 110) / 0.975, 2)
     assert round(res["ganancia_mes"], 6) == 645000      # 755 × 1000 - 110 000
     assert round(res["equilibrio_mes"], 2) == round(110000 / 0.755, 2)
+    assert round(res["equilibrio_unidades"], 4) == round(110000 / 755, 4)
+    # reparto según el precio
+    c.put("/api/costos/ajustes/generales", headers=h, json={"reparto_fijos": "precio", "dias_trabajo_mes": 26})
+    p = c.get(f"/api/recetas/{rid}", headers=h).json()["calculo"]["precios"]
+    assert round(p["costo_fijo"], 6) == 110 and round(p["precio_equilibrio"], 2) == round(220 / 0.865, 2)
+    c.put("/api/costos/ajustes/generales", headers=h, json={"reparto_fijos": "unidad", "dias_trabajo_mes": 26})
     # el reporte de productos incluye la ganancia real
     assert c.get("/api/reportes/productos", headers=h, params={"formato": "xlsx"}).status_code == 200
     # borrar un costo
     otro = c.post("/api/costos", headers=h, json={"tipo": "fijo", "nombre": "Borrar", "monto": 1}).json()
     assert c.delete(f"/api/costos/{otro['id']}", headers=h).json()["ok"]
+
+
+def test_fijos_mayores_que_ventas(h):
+    """Con casi nada de ventas estimadas, se avisa en vez de cargar todo el fijo a un producto sin explicación."""
+    res = c.get("/api/costos/resumen", headers=h).json()
+    rid = next(p["id"] for p in res["productos"] if p["ventas_mes"])
+    res = c.put(f"/api/costos/ventas/{rid}", headers=h, json={"ventas_mes": 1}).json()
+    p = c.get(f"/api/recetas/{rid}", headers=h).json()["calculo"]["precios"]
+    assert p["fijos_exceden_ventas"] is True and p["fijos_mes"] == res["fijos_mes"]
+    # sin unidades por producto se usa la cantidad general de productos al mes
+    c.put(f"/api/costos/ventas/{rid}", headers=h, json={"ventas_mes": None})
+    res = c.put("/api/costos/ajustes/generales", headers=h, json={"unidades_estimadas_mes": 1000, "dias_trabajo_mes": 26}).json()
+    assert res["fuente_unidades"] == "general" and round(res["fijo_unidad"], 6) == round(res["fijos_mes"] / 1000, 6)
+    p = c.get(f"/api/recetas/{rid}", headers=h).json()["calculo"]["precios"]
+    assert p["fijos_exceden_ventas"] is False and round(p["costo_fijo"], 6) == round(res["fijos_mes"] / 1000, 6)
+    c.put("/api/costos/ajustes/generales", headers=h, json={"dias_trabajo_mes": 26})
+
+
+def test_pos(h):
+    """Ventas del POS: costo guardado, sin duplicar al sincronizar, anular, resumen y cierre de caja."""
+    cat = c.get("/api/pos/catalogo", headers=h).json()
+    prod = next(p for k in cat["categorias"] for p in k["productos"] if p["nombre"] == "Producto costos")  # ₡1000, costo ₡200
+    venta = {"uid": "prueba-venta-0001", "forma_pago": "efectivo", "recibido": 5000,
+             "items": [{"receta_id": prod["id"], "cantidad": 3, "precio_unitario": 1000}]}
+    v = c.post("/api/pos/ventas", headers=h, json=venta).json()
+    assert v["nueva"] and v["total"] == 3000 and v["vuelto"] == 2000 and round(v["costo_ingredientes"], 6) == 600
+    assert c.post("/api/pos/ventas", headers=h, json=venta).json()["nueva"] is False   # mismo uid: no se duplica
+    lote = c.post("/api/pos/ventas/lote", headers=h, json={"ventas": [
+        {"uid": "prueba-venta-0002", "forma_pago": "sinpe", "items": [{"receta_id": prod["id"], "cantidad": 1, "precio_unitario": 1000}]},
+        {"uid": "prueba-venta-0001", "forma_pago": "efectivo", "items": [{"receta_id": prod["id"], "cantidad": 3, "precio_unitario": 1000}]},
+        {"uid": "prueba-venta-0003", "items": [{"receta_id": 999999, "cantidad": 1, "precio_unitario": 1}]}]}).json()["resultados"]
+    assert [x["ok"] for x in lote] == [True, True, False] and lote[1]["nueva"] is False
+    hoy = c.get("/api/pos/ventas", headers=h).json()
+    assert {x["uid"] for x in hoy} >= {"prueba-venta-0001", "prueba-venta-0002"}
+    r = c.get("/api/pos/resumen", headers=h, params={"periodo": "dia"}).json()
+    assert r["total"] >= 4000 and r["ventas"] >= 2
+    # anular la de SINPE
+    vid = next(x["id"] for x in hoy if x["uid"] == "prueba-venta-0002")
+    c.post(f"/api/pos/ventas/{vid}/anular", headers=h)
+    r2 = c.get("/api/pos/resumen", headers=h, params={"periodo": "dia"}).json()
+    assert round(r["total"] - r2["total"], 6) == 1000
+    caja = c.post("/api/pos/cierres", headers=h, json={"fondo_inicial": 10000, "efectivo_contado": 12900}).json()
+    assert caja["cierres"][0]["efectivo_esperado"] == 10000 + caja["efectivo"]
+    assert c.get("/api/reportes/ventas", headers=h, params={"formato": "xlsx"}).status_code == 200
+    assert c.get("/api/reportes/ventas", headers=h, params={"formato": "pdf"}).status_code == 200
+    res = c.post("/api/costos/usar-ventas-reales", headers=h).json()
+    assert any(p["id"] == prod["id"] and p["ventas_mes"] == 3 for p in res["productos"])
