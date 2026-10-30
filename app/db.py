@@ -43,6 +43,7 @@ COLUMNAS_NUEVAS = {
         "arte": "VARCHAR(120)",
         "recorte": "VARCHAR(120)",
         "arte_en": "VARCHAR(120)",
+        "ventas_mes": "FLOAT",
         "estilo_arte": "VARCHAR(12) DEFAULT 'auto'",
         "quitar_fondo": "BOOLEAN DEFAULT 1",
         "nombre_en": "VARCHAR(160) DEFAULT ''",

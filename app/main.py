@@ -21,6 +21,7 @@ from . import publicar
 from . import impresos
 from . import reportes
 from . import categorias as categorias_mod
+from . import costos as costos_mod
 from .db import SessionLocal
 from .imagenes import MEDIA_DIR, abrir, borrar_imagen, guardar_imagen, guardar_pil
 from .seed import inicializar
@@ -53,6 +54,7 @@ app.add_middleware(CORSMiddleware, allow_origins=origenes, allow_credentials=Fal
 
 Auth = Depends(usuario_actual)
 app.include_router(categorias_mod.router)
+app.include_router(costos_mod.router)
 
 
 def _guardar(db: Session, msg_dup: str):
@@ -302,6 +304,8 @@ def _resumen(r: dict, ctx):
         "n_items": len(r["items"]), "costo_total": c["totales"].get("seleccionado"),
         "costo_por_rinde": c.get("costo_por_rinde"), "precio_sugerido": p.get("precio_sugerido"),
         "margen_real_pct": p.get("margen_real_pct"), "ganancia": p.get("ganancia"),
+        "ganancia_real": p.get("ganancia_real"), "margen_neto_pct": p.get("margen_neto_pct"),
+        "costo_real": p.get("costo_real"), "ventas_mes": r.get("ventas_mes"),
         "diferencia_competencia": p.get("diferencia_competencia"), "errores": c["errores"]}
 
 
@@ -336,7 +340,7 @@ def calcular_receta(d: schemas.RecetaBorrador, _=Auth, db: Session = Depends(get
 def _aplicar_receta(r: models.Receta, d: schemas.RecetaIn, db: Session):
     for k in ("nombre", "tipo", "categoria", "rinde_cantidad", "rinde_unidad", "merma_pct",
               "margen_objetivo_pct", "precio_venta", "precio_competencia", "notas",
-              "descripcion_menu", "en_menu", "nombre_en", "descripcion_menu_en"):
+              "descripcion_menu", "en_menu", "nombre_en", "descripcion_menu_en", "ventas_mes"):
         v = getattr(d, k)
         setattr(r, k, v.strip() if isinstance(v, str) else v)
     r.items = [models.RecetaItem(orden=n, ingrediente_id=it.ingrediente_id if not it.subreceta_id else None,
@@ -715,13 +719,20 @@ def _rep_productos(ctx) -> "reportes.Reporte":
             p = costing.costo_receta(r, ctx).get("precios", {})
         except costing.ErrorConversion:
             p = {}
-        filas.append([r["nombre"], r["categoria"], x["costo_por_rinde"], r.get("precio_venta"), x["precio_sugerido"],
-                      p.get("ganancia"), p.get("margen_real_pct"), r.get("precio_competencia"), p.get("diferencia_competencia"),
-                      "Sí" if r.get("en_menu") else "No", "Revisar" if x["errores"] else ""])
-    cols = [("Producto", "texto"), ("Categoría", "texto"), ("Costo por producto", "colones"), ("Precio de venta", "colones"),
-            ("Precio sugerido", "colones"), ("Ganancia por venta", "colones"), ("Margen real", "pct"),
-            ("Precio competencia", "colones"), ("Diferencia con competencia", "colones"), ("En el menú", "texto"), ("Estado", "texto")]
-    nota = "Ganancia = precio sin IVA menos costo. Diferencia negativa = más barato que la competencia."
+        filas.append([r["nombre"] + (" (revisar)" if x["errores"] else ""), r["categoria"], x["costo_por_rinde"], r.get("precio_venta"),
+                      x["precio_sugerido"], p.get("ganancia"), p.get("costo_variable"), p.get("costo_fijo"), p.get("ganancia_real"),
+                      p.get("margen_neto_pct"), p.get("precio_equilibrio"), r.get("precio_competencia"), p.get("diferencia_competencia"),
+                      "Sí" if r.get("en_menu") else "No"])
+    cols = [("Producto", "texto"), ("Categoría", "texto"), ("Costo ingredientes", "colones"), ("Precio de venta", "colones"),
+            ("Precio sugerido", "colones"), ("Ganancia bruta", "colones"), ("Costos variables", "colones"),
+            ("Parte de costos fijos", "colones"), ("Ganancia real", "colones"), ("Margen neto", "pct"),
+            ("Precio mínimo sin perder", "colones"), ("Precio competencia", "colones"), ("Diferencia con competencia", "colones"),
+            ("En el menú", "texto")]
+    g = ctx.config.get("negocio") or {}
+    nota = ("Ganancia bruta = precio sin IVA menos ingredientes. Ganancia real = además resta los costos variables y la parte de los "
+            "costos fijos que le toca a cada venta. Diferencia negativa = más barato que la competencia.")
+    if g.get("fijo_pct") is None:
+        nota += " Para calcular la ganancia real, ponga las ventas estimadas en Costos del negocio."
     return reportes.Reporte("Productos", f"{len(filas)} productos", [reportes.Seccion("Productos", cols, filas, nota=nota)], horizontal=True)
 
 
@@ -860,7 +871,7 @@ def publicar_menu(_=Auth):
     return publicar.publicar_ahora(_menu_actual)
 
 
-NO_PUBLICAN = ("/api/auth", "/api/recetas/calcular", "/api/publicacion", "/api/produccion")
+NO_PUBLICAN = ("/api/auth", "/api/recetas/calcular", "/api/publicacion", "/api/produccion", "/api/costos", "/api/reportes", "/api/compras")
 
 
 @app.middleware("http")

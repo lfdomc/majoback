@@ -57,7 +57,7 @@ def rec_dict(r: models.Receta) -> dict:
         "id": r.id, "nombre": r.nombre, "tipo": r.tipo, "categoria": r.categoria,
         "rinde_cantidad": r.rinde_cantidad, "rinde_unidad": r.rinde_unidad, "merma_pct": r.merma_pct,
         "margen_objetivo_pct": r.margen_objetivo_pct, "precio_venta": r.precio_venta,
-        "precio_competencia": r.precio_competencia, "notas": r.notas,
+        "precio_competencia": r.precio_competencia, "notas": r.notas, "ventas_mes": r.ventas_mes,
         "foto": r.foto, "descripcion_menu": r.descripcion_menu or "", "en_menu": bool(r.en_menu),
         "nombre_en": r.nombre_en or "", "descripcion_menu_en": r.descripcion_menu_en or "",
         "arte": r.arte, "estilo_arte": r.estilo_arte or "auto", "quitar_fondo": r.quitar_fondo is not False,
@@ -77,6 +77,8 @@ def leer_config(db: Session) -> dict:
         "aplicar_iva": cfg["aplicar_iva"] in ("1", "true", "True"),
         "redondeo": float(cfg["redondeo"]),
         "nombre_negocio": cfg["nombre_negocio"],
+        "ventas_estimadas_mes": float(cfg.get("ventas_estimadas_mes") or 0),
+        "dias_trabajo_mes": float(cfg.get("dias_trabajo_mes") or 26),
     }
 
 
@@ -84,7 +86,50 @@ def cargar_contexto(db: Session) -> Contexto:
     ings = db.query(models.Ingrediente).options(
         selectinload(models.Ingrediente.presentaciones).selectinload(models.Presentacion.proveedor)).all()
     recs = db.query(models.Receta).options(selectinload(models.Receta.items)).all()
-    return Contexto({i.id: ing_dict(i) for i in ings}, {r.id: rec_dict(r) for r in recs}, leer_config(db))
+    cfg = leer_config(db)
+    recetas = {r.id: rec_dict(r) for r in recs}
+    cfg["negocio"] = gastos_negocio(db, recetas, cfg)
+    return Contexto({i.id: ing_dict(i) for i in ings}, recetas, cfg)
+
+
+# ---------------------------------------------------------------- costos del negocio
+POR_MES = {"diaria": None, "semanal": 52 / 12, "quincenal": 2, "mensual": 1, "trimestral": 1 / 3, "semestral": 1 / 6, "anual": 1 / 12}
+
+
+def a_mensual(monto: float, frecuencia: str, dias_trabajo: float) -> float:
+    f = POR_MES.get(frecuencia, 1)
+    return float(monto or 0) * (dias_trabajo if f is None else f)
+
+
+def gastos_negocio(db: Session, recetas: dict, cfg: dict) -> dict:
+    """Totales de costos fijos y variables y cómo se reparten entre los productos.
+
+    - fijos_mes: suma mensual de los costos fijos activos.
+    - variable_pct: fracción del precio (sin IVA) que se va en costos variables (% ponderado por cuántas ventas aplica).
+    - variable_unidad: ₡ por cada producto vendido.
+    - ventas_mes: ventas estimadas al mes (₡ sin IVA): suma de (precio × unidades) de los productos que tienen
+      ventas estimadas; si ninguno tiene, el monto general de Ajustes.
+    - fijo_pct: fracción de cada venta que se necesita para pagar los fijos (fijos_mes / ventas_mes).
+    """
+    iva = cfg["iva_pct"] / 100 if cfg["aplicar_iva"] else 0
+    filas = db.query(models.CostoNegocio).filter(models.CostoNegocio.activo.is_(True)).all()
+    dias = cfg.get("dias_trabajo_mes") or 26
+    fijos = sum(a_mensual(c.monto, c.frecuencia, dias) for c in filas if c.tipo == "fijo")
+    var_pct = sum((c.monto or 0) / 100 * (c.aplica_pct if c.aplica_pct is not None else 100) / 100
+                  for c in filas if c.tipo == "variable" and c.modo == "porcentaje")
+    var_uni = sum((c.monto or 0) * (c.aplica_pct if c.aplica_pct is not None else 100) / 100
+                  for c in filas if c.tipo == "variable" and c.modo == "por_unidad")
+    por_producto = sum(float(r["precio_venta"]) / (1 + iva) * float(r["ventas_mes"])
+                       for r in recetas.values()
+                       if r["tipo"] == "producto" and r.get("precio_venta") and r.get("ventas_mes"))
+    unidades = sum(float(r["ventas_mes"]) for r in recetas.values() if r["tipo"] == "producto" and r.get("ventas_mes"))
+    if por_producto > 0:
+        ventas, fuente = por_producto, "productos"
+    else:
+        ventas, fuente = float(cfg.get("ventas_estimadas_mes") or 0), "general"
+    return {"fijos_mes": fijos, "variable_pct": var_pct, "variable_unidad": var_uni, "ventas_mes": ventas,
+            "unidades_mes": unidades, "fuente_ventas": fuente, "fijo_pct": (fijos / ventas) if ventas > 0 else None,
+            "dias_trabajo_mes": dias}
 
 
 # ---------------------------------------------------------------- ingredientes
@@ -256,6 +301,31 @@ def precios(rec: dict, costo: dict, cfg: dict) -> dict:
     ref = pv or out["precio_sugerido"]
     if rec.get("precio_competencia") and ref:
         out["diferencia_competencia"] = ref - float(rec["precio_competencia"])
+
+    # ---- ganancia real: además de ingredientes, los costos variables y la parte de los costos fijos
+    g = cfg.get("negocio")
+    if g and rec.get("tipo", "producto") == "producto":
+        out["variable_pct"] = g["variable_pct"] * 100
+        out["variable_unidad"] = g["variable_unidad"]
+        out["fijo_pct"] = g["fijo_pct"] * 100 if g["fijo_pct"] is not None else None
+        # precio mínimo para no perder (cubre ingredientes, variables y su parte de los fijos)
+        resto = 1 - g["variable_pct"] - (g["fijo_pct"] or 0)
+        if resto > 0:
+            eq = (c + g["variable_unidad"]) / resto
+            out["precio_equilibrio_sin_iva"] = eq
+            out["precio_equilibrio"] = eq * (1 + iva)
+        else:
+            out["precio_equilibrio_sin_iva"] = out["precio_equilibrio"] = None
+        base = out["precio_venta_sin_iva"]
+        if base:
+            var = g["variable_unidad"] + base * g["variable_pct"]
+            fijo = base * g["fijo_pct"] if g["fijo_pct"] is not None else None
+            out["costo_variable"] = var
+            out["costo_fijo"] = fijo
+            out["contribucion"] = base - c - var                      # lo que deja para pagar fijos y ganar
+            out["costo_real"] = c + var + (fijo or 0)
+            out["ganancia_real"] = base - out["costo_real"] if fijo is not None else None
+            out["margen_neto_pct"] = out["ganancia_real"] / base * 100 if fijo is not None else None
     return out
 
 

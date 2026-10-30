@@ -87,6 +87,7 @@ class RecetaIn(BaseModel):
     margen_objetivo_pct: float | None = Field(default=None, ge=0, lt=100)
     precio_venta: float | None = Field(default=None, ge=0)
     precio_competencia: float | None = Field(default=None, ge=0)
+    ventas_mes: float | None = Field(default=None, ge=0, le=1_000_000)
     notas: str = ""
     descripcion_menu: str = Field(default="", max_length=600)
     nombre_en: str = Field(default="", max_length=160)

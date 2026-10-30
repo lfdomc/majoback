@@ -69,6 +69,7 @@ class Receta(Base):
     margen_objetivo_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
     precio_venta: Mapped[float | None] = mapped_column(Float, nullable=True)
     precio_competencia: Mapped[float | None] = mapped_column(Float, nullable=True)
+    ventas_mes: Mapped[float | None] = mapped_column(Float, nullable=True)   # unidades que espera vender al mes
     notas: Mapped[str] = mapped_column(Text, default="")
     # Menú para clientes
     foto: Mapped[str | None] = mapped_column(String(120), nullable=True)
@@ -100,6 +101,23 @@ class RecetaItem(Base):
     receta: Mapped[Receta] = relationship(back_populates="items", foreign_keys=[receta_id])
 
 
+class CostoNegocio(Base):
+    """Costo del negocio que no está en las recetas.
+    fijo: se paga igual venda o no (alquiler, luz, salarios). Se guarda con su frecuencia y se pasa a mensual.
+    variable: depende de cada venta, como % del precio (datáfono, plataformas) o ₡ por producto (bolsa, servilleta)."""
+    __tablename__ = "costos_negocio"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    tipo: Mapped[str] = mapped_column(String(10), default="fijo")          # fijo | variable
+    nombre: Mapped[str] = mapped_column(String(120))
+    monto: Mapped[float] = mapped_column(Float, default=0)                  # ₡ o % según el modo
+    frecuencia: Mapped[str] = mapped_column(String(12), default="mensual")  # fijos: diaria|semanal|quincenal|mensual|trimestral|semestral|anual
+    modo: Mapped[str] = mapped_column(String(12), default="porcentaje")     # variables: porcentaje | por_unidad
+    aplica_pct: Mapped[float] = mapped_column(Float, default=100)           # variables: % de las ventas a las que aplica
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    notas: Mapped[str] = mapped_column(Text, default="")
+    orden: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class Configuracion(Base):
     __tablename__ = "configuracion"
     clave: Mapped[str] = mapped_column(String(60), primary_key=True)
@@ -112,4 +130,6 @@ CONFIG_DEFECTO = {
     "aplicar_iva": "0",       # 1 = los precios de venta incluyen IVA
     "redondeo": "50",          # redondear precio sugerido hacia arriba a múltiplos de ₡50
     "nombre_negocio": "Mi negocio",
+    "ventas_estimadas_mes": "0",   # ₡ al mes (sin IVA); se usa si los productos no tienen ventas estimadas
+    "dias_trabajo_mes": "26",
 }

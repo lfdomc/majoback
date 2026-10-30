@@ -235,3 +235,40 @@ def test_ingles(h):
     neg.pop("logo", None)
     c.put("/api/negocio", headers=h, json={**neg, "eslogan_en": "Sweet treats"})
     assert c.get("/api/publico/menu").json()["negocio"]["eslogan_en"] == "Sweet treats"
+
+
+def test_costos_negocio(h):
+    """Ganancia real con costos fijos y variables, verificada a mano."""
+    lista = c.get("/api/costos", headers=h).json()
+    assert any(x["nombre"] == "Alquiler del local" and x["tipo"] == "fijo" and x["monto"] == 0 for x in lista)
+    assert any(x["nombre"].startswith("Comisión del datáfono") and x["tipo"] == "variable" for x in lista)
+    # ingrediente a ₡1/g y producto de 200 g que se vende a ₡1000
+    ing = c.post("/api/ingredientes", headers=h, json={"nombre": "Base costos", "unidad_base": "g", "presentaciones": [
+        {"precio": 1000, "cantidad": 1, "unidad": "kg", "preferida": True}]}).json()["id"]
+    rid = c.post("/api/recetas", headers=h, json={"nombre": "Producto costos", "categoria": "Pruebas", "precio_venta": 1000,
+                                                 "items": [{"ingrediente_id": ing, "cantidad": 200, "unidad": "g"}]}).json()["id"]
+    # quitar ventas estimadas de otros productos de pruebas anteriores
+    for r in c.get("/api/recetas", headers=h).json():
+        if r["tipo"] == "producto" and r.get("ventas_mes"):
+            c.put(f"/api/costos/ventas/{r['id']}", headers=h, json={"ventas_mes": None})
+    alq = next(x for x in lista if x["nombre"] == "Alquiler del local")
+    c.put(f"/api/costos/{alq['id']}", headers=h, json={**alq, "monto": 100000})
+    assert c.post("/api/costos", headers=h, json={"tipo": "fijo", "nombre": "Seguro anual", "monto": 120000, "frecuencia": "anual"}).json()["mensual"] == 10000
+    dat = next(x for x in lista if x["nombre"].startswith("Comisión del datáfono"))
+    c.put(f"/api/costos/{dat['id']}", headers=h, json={**dat, "monto": 5, "aplica_pct": 50})
+    c.post("/api/costos", headers=h, json={"tipo": "variable", "nombre": "Bolsa", "modo": "por_unidad", "monto": 20, "aplica_pct": 100})
+    res = c.put(f"/api/costos/ventas/{rid}", headers=h, json={"ventas_mes": 1000}).json()
+    assert res["fijos_mes"] == 110000 and res["ventas_mes"] == 1000000 and res["fuente_ventas"] == "productos"
+    assert round(res["fijo_pct"], 6) == 11 and round(res["variable_pct"], 6) == 2.5 and res["variable_unidad"] == 20
+    p = c.get(f"/api/recetas/{rid}", headers=h).json()["calculo"]["precios"]
+    assert round(p["costo_variable"], 6) == 45          # 20 + 2,5 % de 1000
+    assert round(p["costo_fijo"], 6) == 110             # 11 % de 1000
+    assert round(p["ganancia_real"], 6) == 645          # 1000 - 200 - 45 - 110
+    assert round(p["precio_equilibrio"], 2) == round(220 / 0.865, 2)
+    assert round(res["ganancia_mes"], 6) == 645000      # 755 × 1000 - 110 000
+    assert round(res["equilibrio_mes"], 2) == round(110000 / 0.755, 2)
+    # el reporte de productos incluye la ganancia real
+    assert c.get("/api/reportes/productos", headers=h, params={"formato": "xlsx"}).status_code == 200
+    # borrar un costo
+    otro = c.post("/api/costos", headers=h, json={"tipo": "fijo", "nombre": "Borrar", "monto": 1}).json()
+    assert c.delete(f"/api/costos/{otro['id']}", headers=h).json()["ok"]
